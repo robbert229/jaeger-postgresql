@@ -5,6 +5,13 @@ before:
     - go mod tidy
 builds:
 - targets: [go_first_class]
+  env:
+  - CGO_ENABLED=0
+  goos:
+  - linux
+  goarch:
+  - amd64
+  - arm64
   mod_timestamp: '{{ .CommitTimestamp }}'
   flags:
     # trims path
@@ -27,6 +34,9 @@ changelog:
 
 release:
   name_template: 'v{{ .Version }}'
+  github:
+    owner: robbert229
+    name: jaeger-postgresql
 
 # modelines, feel free to remove those if you don't want/use them:
 # yaml-language-server: $schema=https://goreleaser.com/static/schema-pro.json
