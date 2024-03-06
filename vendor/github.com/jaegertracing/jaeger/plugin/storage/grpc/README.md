@@ -1,5 +1,8 @@
 gRPC Storage Plugins
 ====================
+
+Update (Jan 2022): as of Jaeger v1.30, the gRPC storage extension can be implemented as a remote gRPC server, in addition to the gRPC plugin architecture described below. The remote server needs to implement the same `storage_v1` gRPC interfaces defined in `plugin/storage/grpc/proto/`.
+
 gRPC Storage Plugins currently use the [Hashicorp go-plugin](https://github.com/hashicorp/go-plugin). This requires the
 implementer of a plugin to develop the "server" side of the go-plugin system. At a high level this looks like:
 
@@ -21,16 +24,33 @@ Implementing a plugin
 ----------------------
 
 Although the instructions below are limited to Go, plugins can be implemented any language. Languages other than
-Go would implement a gRPC server using the `storage_v1.proto` interfaces. The `proto` file can be found in `plugin/storage/grpc/proto/`.
+Go would implement a gRPC server using the `storage_v1` proto interfaces. The `proto` file can be found in `plugin/storage/grpc/proto/`.
 To generate the bindings for your language you would use `protoc` with the appropriate `xx_out=` flag. This is detailed 
 in the [protobuf documentation](https://developers.google.com/protocol-buffers/docs/tutorials) and you can see an example of
 how it is done for Go in the top level Jaeger `Makefile`. 
+
+The easiest way to generate the gRPC storage plugin bindings is to use [Docker Protobuf](https://github.com/jaegertracing/docker-protobuf/) which is a lightweight `protoc` Docker image containing the dependencies needed to generate code for multiple languages. For example, one can generate bindings for C# on Windows with Docker for Windows using the following steps:
+1. First clone the Jaeger github repo to a folder (e.g. `c:\source\repos\jaeger`):
+```
+$ mkdir c:\source\repos\jaeger
+$ cd c:\source\repos\jaeger
+$ git clone https://github.com/jaegertracing/jaeger.git c:\source\repos\jaeger
+```
+2. Initialize the Jaeger repo submodules (this pulls in code from other Jaeger repositories that are needed):
+```
+$ git submodule update --init --recursive
+```
+3. Then execute the following Docker command which mounts the local directory `c:\source\repos\jaeger` to the directory `/jaeger` in the Docker container and then executes the `jaegertracing/protobuf:0.2.0` command. This will create a file called `Storage.cs` in your local Windows folder `c:\source\repos\jaeger\code` containing the gRPC Storage Plugin bindings.
+```
+$ docker run --rm -u 1000 -v/c/source/repos/jaeger:/jaeger -w/jaeger \
+    jaegertracing/protobuf:0.2.0 "-I/jaeger -Iidl/proto/api_v2 -I/usr/include/github.com/gogo/protobuf -Iplugin/storage/grpc/proto --csharp_out=/jaeger/code plugin/storage/grpc/proto/storage.proto"
+```
 
 There are instructions on implementing a `go-plugin` server for non-Go languages in the 
 [go-plugin non-go guide](https://github.com/hashicorp/go-plugin/blob/master/docs/guide-plugin-write-non-go.md).
 Take note of the required [health check service](https://github.com/hashicorp/go-plugin/blob/master/docs/guide-plugin-write-non-go.md#3-add-the-grpc-health-checking-service).
   
-A Go plugin is a standalone application which calls `grpc.Serve(&plugin)` in its `main` function, where the `grpc` package 
+A Go plugin is a standalone application which calls `grpc.Serve(&pluginServices)` in its `main` function, where the `grpc` package 
 is `github.com/jaegertracing/jaeger/plugin/storage/grpc`.
  
 ```go
@@ -48,7 +68,10 @@ is `github.com/jaegertracing/jaeger/plugin/storage/grpc`.
 
         plugin := myStoragePlugin{}
         
-        grpc.Serve(&plugin)
+        grpc.Serve(&shared.PluginServices{
+			Store:        plugin,
+			ArchiveStore: plugin,
+		})
     }
 ```
  
@@ -71,6 +94,56 @@ dependencies, you can also use `go.mod` to achieve the same goal of pinning your
 
 A simple plugin which uses the memstore storage implementation can be found in the `examples` directory of the top level
 of the Jaeger project.
+
+To support archive storage a plugin must implement the ArchiveStoragePlugin interface of:
+
+```go
+type ArchiveStoragePlugin interface {
+	ArchiveSpanReader() spanstore.Reader
+	ArchiveSpanWriter() spanstore.Writer
+}
+```
+
+If you don't plan to implement archive storage simply do not fill `ArchiveStore` property of `shared.PluginServices`:
+
+```go
+grpc.Serve(&shared.PluginServices{
+    Store: plugin,
+})
+```
+
+The plugin framework supports writing spans via gRPC stream, instead of unary messages. Streaming writes can improve throughput and decrease CPU load (see benchmarks in Issue #3636). The plugin needs to implement `StreamingSpanWriter` interface and indicate support via the `streamingSpanWriter` flag in the `Capabilities` response.
+
+Note that using the streaming spanWriter may make the collector's `save_by_svr` metric inaccurate, in which case users will need to pay attention to the metrics provided by the plugin.
+
+Certifying compliance
+---------------
+A plugin implementation shall verify it's correctness with Jaeger storage protocol by running the storage integration tests from [integration package](https://github.com/jaegertracing/jaeger/blob/main/plugin/storage/integration/integration.go#L397).
+
+```golang
+import (
+	jaeger_integration_tests "github.com/jaegertracing/jaeger/plugin/storage/integration"
+)
+
+func TestJaegerStorageIntegration(t *testing.T) {
+        ...
+	si := jaeger_integration_tests.StorageIntegration{
+		SpanReader: createSpanReader(),
+		SpanWriter: createSpanWriter(),
+		CleanUp: func() error { ... },
+		Refresh: func() error { ... },
+		SkipList: []string {  // Skip any unsupported tests
+		},
+	}
+	// Runs all storage integration tests.
+	si.IntegrationTestAll(t)
+}
+```
+For more details, refer to one of the following implementations.
+
+1. [grpc-plugin](https://github.com/jaegertracing/jaeger/blob/cbceceb1e0cc308cdf0226b1fa19b9c531a3a2d3/plugin/storage/integration/grpc_test.go#L189-L203)
+2. [jaeger-clickhouse](https://github.com/jaegertracing/jaeger-clickhouse/blob/798c568c1e1a345536f35692fca71196a796811e/integration/grpc_test.go#L88-L107)
+3. [Timescale DB via Promscale](https://github.com/timescale/promscale/blob/ccde8accf5205450891e805e23566d9a11dbf8d3/pkg/tests/end_to_end_tests/jaeger_store_integration_test.go#L79-L97)
 
 Running with a plugin
 ---------------------
@@ -113,6 +186,28 @@ There are more logger options that can be used with `hclog` listed on [godoc](ht
 Note: Setting the `Output` option to `os.Stdout` can confuse the `go-plugin` framework and lead it to consider the plugin
 errored.
 
+Tracing
+-------
+
+When `grpc-plugin` is used, it will be running as a separated process, thus context propagation is necessary for inter-process scenarios.
+
+In order to get complete traces containing both `jaeger-component`(s) and the `grpc-plugin`, developers should enable tracing at server-side.
+Thus, we can leverage gRPC interceptors,
+
+```golang
+grpc.ServeWithGRPCServer(&shared.PluginServices{
+    Store:        memStorePlugin,
+    ArchiveStore: memStorePlugin,
+}, func(options []googleGRPC.ServerOption) *googleGRPC.Server {
+    return plugin.DefaultGRPCServer([]googleGRPC.ServerOption{
+        googleGRPC.UnaryInterceptor(otgrpc.OpenTracingServerInterceptor(tracer)),
+        googleGRPC.StreamInterceptor(otgrpc.OpenTracingStreamServerInterceptor(tracer)),
+    })
+})
+```
+
+Refer to `example/memstore-plugin` for more details.
+
 Bearer token propagation from the UI
 ------------------------------------
 When using `--query.bearer-token-propagation=true`, the bearer token will be properly passed on to the gRPC plugin server. To get access to the bearer token in your plugin, use a method similar to:
@@ -121,15 +216,16 @@ When using `--query.bearer-token-propagation=true`, the bearer token will be pro
 import (
     // ... other imports
     "fmt"
-    "github.com/jaegertracing/jaeger/storage/spanstore"
     "google.golang.org/grpc/metadata"
+
+    "github.com/jaegertracing/jaeger/plugin/storage/grpc"
 )
 
 // ... spanReader type declared here
 
 func (r *spanReader) extractBearerToken(ctx context.Context) (string, bool) {
 	if md, ok := metadata.FromIncomingContext(ctx); ok {
-		values := md.Get(spanstore.BearerTokenKey)
+		values := md.Get(grpc.BearerTokenKey)
 		if len(values) > 0 {
 			return values[0], true
 		}
