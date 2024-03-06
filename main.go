@@ -1,10 +1,11 @@
 package main
 
 import (
-        "os"
- 
-	"github.com/hashicorp/go-hclog"
+	"os"
+
 	"jaeger-postgresql/pgstore"
+
+	"github.com/hashicorp/go-hclog"
 	"github.com/jaegertracing/jaeger/plugin/storage/grpc"
 	"github.com/jaegertracing/jaeger/plugin/storage/grpc/shared"
 )
