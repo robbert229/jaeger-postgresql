@@ -36,4 +36,6 @@ jobs:
       - name: Build
         run: go build -v ./...
       - name: Test
+        env:
+          TEST_DATABASE_URL: postgresql://postgres:password@postgres:5432/jaeger
         run: go test -test.parallel=1 ./...

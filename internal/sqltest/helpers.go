@@ -3,6 +3,7 @@ package sqltest
 import (
 	"context"
 	"fmt"
+	"os"
 
 	"github.com/hashicorp/go-hclog"
 	"github.com/jackc/pgx/v5"
@@ -32,6 +33,14 @@ func cleanup(conn *pgx.Conn) func() error {
 	}
 }
 
+func getDatabaseURL() string {
+	if url := os.Getenv("TEST_DATABASE_URL"); url != "" {
+		return url
+	}
+
+	return "postgres://postgres:password@localhost:5432/jaeger"
+}
+
 // Harness provides a test harness
 func Harness(t interface {
 	Fatal(args ...any)
@@ -39,12 +48,12 @@ func Harness(t interface {
 }) (*pgx.Conn, func() error) {
 	t.Helper()
 
-	err := sql.Migrate(hclog.NewNullLogger(), "postgres://postgres:password@localhost:5432/jaeger")
+	err := sql.Migrate(hclog.NewNullLogger(), getDatabaseURL())
 	if err != nil {
 		t.Fatal("failed to migrate database", err)
 	}
 
-	conn, err := pgx.Connect(context.Background(), "postgres://postgres:password@localhost:5432/jaeger")
+	conn, err := pgx.Connect(context.Background(), getDatabaseURL())
 	if err != nil {
 		t.Fatal("failed to connect to database", err)
 	}
