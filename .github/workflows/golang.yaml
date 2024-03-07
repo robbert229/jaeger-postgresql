@@ -12,7 +12,7 @@ jobs:
         image: postgres:16.2
         # Provide the password for postgres
         env:
-          POSTGRES_PASSWORD: postgres
+          POSTGRES_PASSWORD: password
           POSTGRES_DB: jaeger
         # Set health checks to wait until postgres has started
         options: >-
@@ -37,5 +37,5 @@ jobs:
         run: go build -v ./...
       - name: Test
         env:
-          TEST_DATABASE_URL: postgresql://postgres:password@postgres:5432/jaeger
+          TEST_DATABASE_URL: "postgres://postgres:password@localhost:5432/jaeger"
         run: go test -test.parallel=1 ./...
