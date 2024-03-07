@@ -84,13 +84,18 @@ func (r *Reader) GetTrace(ctx context.Context, traceID model.TraceID) (*model.Tr
 			return nil, fmt.Errorf("failed to decode logs: %w", err)
 		}
 
+		decodedSpanRefs, err := DecodeSpanRefs(dbSpan.Refs)
+		if err != nil {
+			return nil, fmt.Errorf("failed to decode spanrefs: %w", err)
+		}
+
 		spans[i] = &model.Span{
 			TraceID:       DecodeTraceID(dbSpan.TraceID),
 			SpanID:        DecodeSpanID(dbSpan.SpanID),
 			OperationName: dbSpan.OperationName,
 			Tags:          tags,
-			References:    []model.SpanRef{},
-			Flags:         model.Flags(int32(dbSpan.Flags.Int64)),
+			References:    decodedSpanRefs,
+			Flags:         model.Flags(int32(dbSpan.Flags)),
 			StartTime:     dbSpan.StartTime.Time,
 			Duration:      duration,
 			Logs:          logs,
@@ -145,12 +150,11 @@ func (r *Reader) FindTraces(ctx context.Context, query *spanstore.TraceQueryPara
 		StartTimeMinimum:       EncodeTimestamp(query.StartTimeMin),
 		StartTimeMinimumEnable: query.StartTimeMin.After(time.Time{}),
 		StartTimeMaximum:       EncodeTimestamp(query.StartTimeMax),
-		// StartTimeMaximumEnable: query.StartTimeMax.After(time.Time{}),
-		StartTimeMaximumEnable: false, // maintaining feature parity for now.
+		StartTimeMaximumEnable: query.StartTimeMax.After(time.Time{}),
 		DurationMinimum:        EncodeInterval(query.DurationMin),
-		DurationMinimumEnable:  query.DurationMin > 0*time.Second,
+		DurationMinimumEnable:  query.DurationMin != time.Duration(0),
 		DurationMaximum:        EncodeInterval(query.DurationMax),
-		DurationMaximumEnable:  query.DurationMax > 0*time.Second,
+		DurationMaximumEnable:  query.DurationMax != time.Duration(0),
 		NumTraces:              query.NumTraces,
 		// Tags
 	})
@@ -217,8 +221,6 @@ func (r *Reader) FindTraces(ctx context.Context, query *spanstore.TraceQueryPara
 
 // FindTraceIDs retrieve traceIDs that match the traceQuery
 func (r *Reader) FindTraceIDs(ctx context.Context, query *spanstore.TraceQueryParameters) ([]model.TraceID, error) {
-	// query.NumTraces
-
 	response, err := r.q.FindTraceIDs(ctx, sql.FindTraceIDsParams{
 		ServiceName:            query.ServiceName,
 		ServiceNameEnable:      len(query.ServiceName) > 0,
@@ -234,7 +236,7 @@ func (r *Reader) FindTraceIDs(ctx context.Context, query *spanstore.TraceQueryPa
 		DurationMaximum:        EncodeInterval(query.DurationMax),
 		DurationMaximumEnable:  query.DurationMax > 0*time.Second,
 		// TODO(johnrowl) add tags
-
+		NumTraces: query.NumTraces,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to query trace ids: %w", err)
@@ -264,20 +266,22 @@ func (r *Reader) FindTraceIDs(ctx context.Context, query *spanstore.TraceQueryPa
 
 // GetDependencies returns all inter-service dependencies
 func (r *Reader) GetDependencies(ctx context.Context, endTs time.Time, lookback time.Duration) ([]model.DependencyLink, error) {
-	response, err := r.q.GetDependencies(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to query dependencies: %w", err)
-	}
+	// response, err := r.q.GetDependencies(ctx)
+	// if err != nil {
+	// 	return nil, fmt.Errorf("failed to query dependencies: %w", err)
+	// }
 
-	dependencies := make([]model.DependencyLink, len(response))
-	for i, iter := range response {
-		dependencies[i] = model.DependencyLink{
-			Parent:    iter.Parent,
-			Child:     iter.Child,
-			CallCount: uint64(iter.CallCount),
-			Source:    iter.Source,
-		}
-	}
+	// dependencies := make([]model.DependencyLink, len(response))
+	// for i, iter := range response {
+	// 	dependencies[i] = model.DependencyLink{
+	// 		Parent:    iter.Parent,
+	// 		Child:     iter.Child,
+	// 		CallCount: uint64(iter.CallCount),
+	// 		Source:    iter.Source,
+	// 	}
+	// }
 
-	return dependencies, nil
+	// return dependencies, nil
+
+	return []model.DependencyLink{}, nil
 }

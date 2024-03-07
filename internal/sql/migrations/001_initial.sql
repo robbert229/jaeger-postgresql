@@ -23,33 +23,24 @@ CREATE TABLE operations (
 -- compatability measure with zipkin.
 CREATE TABLE spans (
   hack_id BIGSERIAL PRIMARY KEY,
-  span_id BYTEA,
-  trace_id BYTEA,
+  span_id BYTEA NOT NULL,
+  trace_id BYTEA NOT NULL,
   operation_id BIGINT REFERENCES operations(id) NOT NULL,
-  flags BIGINT,
-  start_time TIMESTAMP WITH TIME ZONE NOT NULL,
+  flags BIGINT NOT NULL,
+  start_time TIMESTAMP NOT NULL,
   duration INTERVAL NOT NULL,
-  tags JSONB NOT NULL,
+  tags JSONB,
   service_id BIGINT REFERENCES services(id) NOT NULL,
   process_id TEXT NOT NULL,
   process_tags JSONB NOT NULL,
   warnings TEXT[],
   logs JSONB,
-  kind SPANKIND NOT NULL
-);
-
-CREATE TABLE spanrefs (
-    id BIGSERIAL,
-    PRIMARY KEY(id),
-    source_span_id BYTEA NOT NULL,
-    child_span_id BYTEA NOT NULL,
-    trace_id BYTEA,
-    ref_type TEXT NOT NULL
+  kind SPANKIND NOT NULL,
+  refs JSONB NOT NULL
 );
 
 -- +goose Down
 
-DROP TABLE spanrefs;
 DROP TABLE spans;
 DROP TABLE operations;
 DROP TABLE services;

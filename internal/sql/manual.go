@@ -16,10 +16,10 @@ FROM spans
 WHERE
     (services.name = $1::VARCHAR OR $2::BOOLEAN = FALSE) AND
     (operations.name = $3::VARCHAR OR $4::BOOLEAN = FALSE) AND
-    (start_time >= $5::TIMESTAMPTZ OR $6::BOOLEAN = FALSE) AND
-    (start_time < $7::TIMESTAMPTZ OR $8::BOOLEAN = FALSE) AND
-    (duration > $9::INTERVAL OR $10::BOOLEAN = FALSE) AND
-    (duration < $11::INTERVAL OR $12::BOOLEAN = FALSE)
+    (start_time >= $5::TIMESTAMPTZ OR $6::BOOLEAN = FALSE OR TRUE) AND
+    (start_time <= $7::TIMESTAMPTZ OR $8::BOOLEAN = FALSE OR TRUE) AND
+    (duration >= $9::INTERVAL OR $10::BOOLEAN = FALSE) AND
+    (duration <= $11::INTERVAL OR $12::BOOLEAN = FALSE)
 LIMIT %d
 `, limit)
 }
@@ -29,14 +29,14 @@ type FindTraceIDsParams struct {
 	ServiceNameEnable      bool
 	OperationName          string
 	OperationNameEnable    bool
-	StartTimeMinimum       pgtype.Timestamptz
+	StartTimeMinimum       pgtype.Timestamp
 	StartTimeMinimumEnable bool
-	StartTimeMaximum       pgtype.Timestamptz
+	StartTimeMaximum       pgtype.Timestamp
 	StartTimeMaximumEnable bool
-	DurationMinimum        pgtype.Interval
-	DurationMinimumEnable  bool
-	DurationMaximum        pgtype.Interval
-	DurationMaximumEnable  bool
+	DurationMinimum        pgtype.Interval // 9
+	DurationMinimumEnable  bool            // 10
+	DurationMaximum        pgtype.Interval // 11
+	DurationMaximumEnable  bool            // 12
 	NumTraces              int
 }
 

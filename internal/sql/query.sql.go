@@ -11,52 +11,6 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const getDependencies = `-- name: GetDependencies :many
-SELECT
-    COUNT(*) AS call_count,
-    source_services.name as parent,
-    child_services.name as child,
-    '' as source
-FROM spanrefs
-    INNER JOIN spans AS source_spans ON (source_spans.span_id = spanrefs.source_span_id)
-    INNER JOIN spans AS child_spans ON (child_spans.span_id = spanrefs.child_span_id)
-    INNER JOIN services AS source_services ON (source_spans.service_id = source_services.id)
-    INNER JOIN services AS child_services ON (child_spans.service_id = child_services.id)
-GROUP BY source_services.name, child_services.name
-`
-
-type GetDependenciesRow struct {
-	CallCount int64
-	Parent    string
-	Child     string
-	Source    string
-}
-
-func (q *Queries) GetDependencies(ctx context.Context) ([]GetDependenciesRow, error) {
-	rows, err := q.db.Query(ctx, getDependencies)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []GetDependenciesRow
-	for rows.Next() {
-		var i GetDependenciesRow
-		if err := rows.Scan(
-			&i.CallCount,
-			&i.Parent,
-			&i.Child,
-			&i.Source,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const getOperationID = `-- name: GetOperationID :one
 SELECT id 
 FROM operations 
@@ -165,7 +119,8 @@ SELECT
   spans.kind as kind,
   services.name as process_name,
   spans.process_tags as process_tags,
-  spans.logs as logs
+  spans.logs as logs,
+  spans.refs as refs
 FROM spans 
   INNER JOIN operations ON (spans.operation_id = operations.id)
   INNER JOIN services ON (spans.service_id = services.id)
@@ -176,8 +131,8 @@ type GetTraceSpansRow struct {
 	SpanID        []byte
 	TraceID       []byte
 	OperationName string
-	Flags         pgtype.Int8
-	StartTime     pgtype.Timestamptz
+	Flags         int64
+	StartTime     pgtype.Timestamp
 	Duration      pgtype.Interval
 	Tags          []byte
 	ProcessID     string
@@ -186,6 +141,7 @@ type GetTraceSpansRow struct {
 	ProcessName   string
 	ProcessTags   []byte
 	Logs          []byte
+	Refs          []byte
 }
 
 func (q *Queries) GetTraceSpans(ctx context.Context, traceID []byte) ([]GetTraceSpansRow, error) {
@@ -211,6 +167,7 @@ func (q *Queries) GetTraceSpans(ctx context.Context, traceID []byte) ([]GetTrace
 			&i.ProcessName,
 			&i.ProcessTags,
 			&i.Logs,
+			&i.Refs,
 		); err != nil {
 			return nil, err
 		}
@@ -236,14 +193,15 @@ INSERT INTO spans (
   process_tags,
   warnings,
   kind,
-  logs
+  logs,
+  refs
 )
 VALUES(
   $1::BYTEA,
   $2::BYTEA,
   $3::BIGINT,
   $4::BIGINT,
-  $5::TIMESTAMPTZ,
+  $5::TIMESTAMP,
   $6::INTERVAL,
   $7::JSONB,
   $8::BIGINT,
@@ -251,7 +209,8 @@ VALUES(
   $10::JSONB,
   $11::TEXT[],
   $12::SPANKIND,
-  $13::JSONB
+  $13::JSONB,
+  $14::JSONB
 )
 RETURNING spans.hack_id
 `
@@ -261,7 +220,7 @@ type InsertSpanParams struct {
 	TraceID     []byte
 	OperationID int64
 	Flags       int64
-	StartTime   pgtype.Timestamptz
+	StartTime   pgtype.Timestamp
 	Duration    pgtype.Interval
 	Tags        []byte
 	ServiceID   int64
@@ -270,6 +229,7 @@ type InsertSpanParams struct {
 	Warnings    []string
 	Kind        Spankind
 	Logs        []byte
+	Refs        []byte
 }
 
 func (q *Queries) InsertSpan(ctx context.Context, arg InsertSpanParams) (int64, error) {
@@ -287,17 +247,11 @@ func (q *Queries) InsertSpan(ctx context.Context, arg InsertSpanParams) (int64, 
 		arg.Warnings,
 		arg.Kind,
 		arg.Logs,
+		arg.Refs,
 	)
 	var hack_id int64
 	err := row.Scan(&hack_id)
 	return hack_id, err
-}
-
-type InsertSpanRefsParams struct {
-	SourceSpanID []byte
-	ChildSpanID  []byte
-	TraceID      []byte
-	RefType      string
 }
 
 const upsertOperation = `-- name: UpsertOperation :exec
@@ -322,10 +276,27 @@ func (q *Queries) UpsertOperation(ctx context.Context, arg UpsertOperationParams
 
 const upsertService = `-- name: UpsertService :exec
 
+
 INSERT INTO services (name) 
 VALUES ($1::VARCHAR) ON CONFLICT(name) DO NOTHING RETURNING id
 `
 
+// -- name: GetDependencies :many
+// SELECT
+//
+//	COUNT(*) AS call_count,
+//	source_services.name as parent,
+//	child_services.name as child,
+//	'' as source
+//
+// FROM spanrefs
+//
+//	INNER JOIN spans AS source_spans ON (source_spans.span_id = spanrefs.source_span_id)
+//	INNER JOIN spans AS child_spans ON (child_spans.span_id = spanrefs.child_span_id)
+//	INNER JOIN services AS source_services ON (source_spans.service_id = source_services.id)
+//	INNER JOIN services AS child_services ON (child_spans.service_id = child_services.id)
+//
+// GROUP BY source_services.name, child_services.name;
 // -- name: FindTraceIDs :many
 // SELECT DISTINCT spans.trace_id
 // FROM spans

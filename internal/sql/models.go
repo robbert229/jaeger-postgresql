@@ -75,8 +75,8 @@ type Span struct {
 	SpanID      []byte
 	TraceID     []byte
 	OperationID int64
-	Flags       pgtype.Int8
-	StartTime   pgtype.Timestamptz
+	Flags       int64
+	StartTime   pgtype.Timestamp
 	Duration    pgtype.Interval
 	Tags        []byte
 	ServiceID   int64
@@ -85,12 +85,5 @@ type Span struct {
 	Warnings    []string
 	Logs        []byte
 	Kind        Spankind
-}
-
-type Spanref struct {
-	ID           int64
-	SourceSpanID []byte
-	ChildSpanID  []byte
-	TraceID      []byte
-	RefType      string
+	Refs        []byte
 }

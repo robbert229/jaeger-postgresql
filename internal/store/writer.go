@@ -94,6 +94,11 @@ func (w *Writer) WriteSpan(ctx context.Context, span *model.Span) error {
 		return fmt.Errorf("failed to encode process tags: %w", err)
 	}
 
+	encodedSpanRefs, err := EncodeSpanRefs(span.References)
+	if err != nil {
+		return fmt.Errorf("failed to encode spanrefs: %w", err)
+	}
+
 	_, err = w.q.InsertSpan(ctx, sql.InsertSpanParams{
 		SpanID:      EncodeSpanID(span.SpanID),
 		TraceID:     EncodeTraceID(span.TraceID),
@@ -108,37 +113,10 @@ func (w *Writer) WriteSpan(ctx context.Context, span *model.Span) error {
 		ProcessTags: processTags,
 		Kind:        EncodeSpanKind(modelKind),
 		Logs:        logs,
+		Refs:        encodedSpanRefs,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to insert span: %w", err)
-	}
-
-	err = w.insertRefs(ctx, span)
-	if err != nil {
-		return fmt.Errorf("failed to insert spanrefs: %w", err)
-	}
-
-	return nil
-}
-
-func (w *Writer) insertRefs(ctx context.Context, input *model.Span) error {
-	if input.References == nil {
-		return nil
-	}
-
-	args := make([]sql.InsertSpanRefsParams, len(input.References))
-	for i, spanref := range input.References {
-		args[i] = sql.InsertSpanRefsParams{
-			RefType:      spanref.RefType.String(),
-			SourceSpanID: EncodeSpanID(input.SpanID),
-			ChildSpanID:  EncodeSpanID(spanref.SpanID),
-			TraceID:      EncodeTraceID(spanref.TraceID),
-		}
-	}
-
-	_, err := w.q.InsertSpanRefs(ctx, args)
-	if err != nil {
-		return fmt.Errorf("failed to insert refs: %w", err)
 	}
 
 	return nil

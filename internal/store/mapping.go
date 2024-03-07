@@ -44,12 +44,12 @@ func EncodeInterval(duration time.Duration) pgtype.Interval {
 	return pgtype.Interval{Microseconds: duration.Microseconds(), Valid: true}
 }
 
-func EncodeTimestamp(t time.Time) pgtype.Timestamptz {
-	return pgtype.Timestamptz{Time: t, Valid: true}
+func EncodeTimestamp(t time.Time) pgtype.Timestamp {
+	return pgtype.Timestamp{Time: t, Valid: true}
 }
 
-func EncodeTags(input []model.KeyValue) ([]byte, error) {
-	dict := make([][]any, len(input))
+func encodeTagsToSlice(input []model.KeyValue) [][]any {
+	slice := make([][]any, len(input))
 
 	for i, kv := range input {
 		var value interface{}
@@ -65,14 +65,20 @@ func EncodeTags(input []model.KeyValue) ([]byte, error) {
 			value = base64.RawStdEncoding.EncodeToString(kv.VBinary)
 		}
 
-		dict[i] = []any{
+		slice[i] = []any{
 			kv.Key,
 			kv.VType,
 			value,
 		}
 	}
 
-	bytes, err := json.Marshal(dict)
+	return slice
+}
+
+func EncodeTags(input []model.KeyValue) ([]byte, error) {
+	slice := encodeTagsToSlice(input)
+
+	bytes, err := json.Marshal(slice)
 	if err != nil {
 		return nil, fmt.Errorf("failed to encode to json: %w", err)
 	}
@@ -80,17 +86,14 @@ func EncodeTags(input []model.KeyValue) ([]byte, error) {
 	return bytes, nil
 }
 
-func DecodeTags(input []byte) ([]model.KeyValue, error) {
-	slice := [][]any{}
-	if err := json.Unmarshal(input, &slice); err != nil {
-		return nil, fmt.Errorf("failed to decode tag json: %w", err)
-	}
-
+func decodeTagsFromSlice(slice []any) ([]model.KeyValue, error) {
 	var tags []model.KeyValue
-	for _, v := range slice {
-		key := v[0].(string)
-		vType := model.ValueType(int(v[1].(float64)))
-		value := v[2]
+	for _, subslice := range slice {
+		cast := subslice.([]any)
+
+		key := cast[0].(string)
+		vType := model.ValueType(int(cast[1].(float64)))
+		value := cast[2]
 
 		kv := model.KeyValue{Key: key, VType: vType}
 		switch vType {
@@ -119,6 +122,26 @@ func DecodeTags(input []byte) ([]model.KeyValue, error) {
 		tags = append(tags, kv)
 	}
 
+	// tags must not be nil. This is because the serialization/deserialization
+	// tests demand it to be empty array
+	if tags == nil {
+		tags = []model.KeyValue{}
+	}
+
+	return tags, nil
+}
+
+func DecodeTags(input []byte) ([]model.KeyValue, error) {
+	slice := []any{}
+	if err := json.Unmarshal(input, &slice); err != nil {
+		return nil, fmt.Errorf("failed to decode tag json: %w", err)
+	}
+
+	tags, err := decodeTagsFromSlice(slice)
+	if err != nil {
+		return nil, err
+	}
+
 	return tags, nil
 
 }
@@ -143,9 +166,108 @@ func EncodeSpanKind(modelKind trace.SpanKind) sql.Spankind {
 }
 
 func EncodeLogs(logs []model.Log) ([]byte, error) {
-	return []byte(nil), nil
+	slice := make([][]any, len(logs))
+	for i, log := range logs {
+
+		slice[i] = []any{
+			pgtype.Timestamp{Time: log.Timestamp, Valid: true},
+			encodeTagsToSlice(log.Fields),
+		}
+	}
+
+	bytes, err := json.Marshal(slice)
+	if err != nil {
+		return nil, err
+	}
+
+	return bytes, nil
+}
+
+func TruncateTime(ts time.Time) time.Time {
+	ts, err := time.Parse(time.RFC3339Nano, ts.Format(time.RFC3339Nano))
+	if err != nil {
+		panic(err)
+	}
+
+	return ts
 }
 
 func DecodeLogs(raw []byte) ([]model.Log, error) {
-	return []model.Log{}, nil
+	slice := [][]any{}
+	if err := json.Unmarshal(raw, &slice); err != nil {
+		return nil, fmt.Errorf("failed to decode logs json: %w", err)
+	}
+
+	logs := make([]model.Log, len(slice))
+	for i, subslice := range slice {
+		cast := subslice[1].([]any)
+		fields, err := decodeTagsFromSlice(cast)
+		if err != nil {
+			return nil, err
+		}
+
+		layout := time.RFC3339Nano
+		t, err := time.Parse(layout, subslice[0].(string))
+		if err != nil {
+			return nil, err
+		}
+
+		logs[i] = model.Log{
+			Timestamp: t,
+			Fields:    fields,
+		}
+	}
+
+	return logs, nil
+}
+
+func EncodeSpanRefs(spanrefs []model.SpanRef) ([]byte, error) {
+	if len(spanrefs) == 0 {
+		return []byte("[]"), nil
+	}
+
+	slice := make([][]any, len(spanrefs))
+	for i, spanref := range spanrefs {
+		slice[i] = []any{
+			base64.StdEncoding.EncodeToString(EncodeTraceID(spanref.TraceID)),
+			base64.StdEncoding.EncodeToString(EncodeSpanID(spanref.SpanID)),
+			int32(spanref.RefType),
+		}
+	}
+	bytes, err := json.Marshal(slice)
+	if err != nil {
+		return nil, err
+	}
+
+	return bytes, nil
+}
+
+func DecodeSpanRefs(data []byte) ([]model.SpanRef, error) {
+	var slice [][]any
+	err := json.Unmarshal(data, &slice)
+	if err != nil {
+		return nil, err
+	}
+
+	results := make([]model.SpanRef, len(slice))
+
+	for i, subslice := range slice {
+		traceID, err := base64.StdEncoding.DecodeString(subslice[0].(string))
+		if err != nil {
+			return nil, err
+		}
+
+		spanID, err := base64.StdEncoding.DecodeString(subslice[1].(string))
+		if err != nil {
+			return nil, err
+		}
+
+		results[i] = model.SpanRef{
+			TraceID: DecodeTraceID(traceID),
+			SpanID:  DecodeSpanID(spanID),
+			RefType: model.SpanRefType(int32(subslice[2].(float64))),
+		}
+	}
+
+	return results, nil
 }

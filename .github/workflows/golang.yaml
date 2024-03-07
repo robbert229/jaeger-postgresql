@@ -2,6 +2,8 @@ name: golang
 on: [push]
 
 jobs:
+  build:
+    runs-on: ubuntu-latest
     # Service containers to run with `container-job`
     services:
       # Label used to access the service container
@@ -21,8 +23,6 @@ jobs:
         ports:
           # Maps tcp port 5432 on service container to the host
           - 5432:5432
-  build:
-    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - name: Setup Go
@@ -36,4 +36,4 @@ jobs:
       - name: Build
         run: go build -v ./...
       - name: Test
-        run: go test ./...
+        run: go test -test.parallel=1 ./...

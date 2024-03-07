@@ -47,7 +47,6 @@ func main() {
 	if err != nil {
 		logger.Error("failed to migrate database", "error", err)
 		os.Exit(1)
-
 	}
 
 	pgxconfig, err := pgxpool.ParseConfig(config.DatabaseURL)

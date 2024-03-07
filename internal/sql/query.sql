@@ -10,18 +10,18 @@ SELECT services.name
 FROM services
 ORDER BY services.name ASC;
 
--- name: GetDependencies :many
-SELECT
-    COUNT(*) AS call_count,
-    source_services.name as parent,
-    child_services.name as child,
-    '' as source
-FROM spanrefs
-    INNER JOIN spans AS source_spans ON (source_spans.span_id = spanrefs.source_span_id)
-    INNER JOIN spans AS child_spans ON (child_spans.span_id = spanrefs.child_span_id)
-    INNER JOIN services AS source_services ON (source_spans.service_id = source_services.id)
-    INNER JOIN services AS child_services ON (child_spans.service_id = child_services.id)
-GROUP BY source_services.name, child_services.name;
+-- -- name: GetDependencies :many
+-- SELECT
+--     COUNT(*) AS call_count,
+--     source_services.name as parent,
+--     child_services.name as child,
+--     '' as source
+-- FROM spanrefs
+--     INNER JOIN spans AS source_spans ON (source_spans.span_id = spanrefs.source_span_id)
+--     INNER JOIN spans AS child_spans ON (child_spans.span_id = spanrefs.child_span_id)
+--     INNER JOIN services AS source_services ON (source_spans.service_id = source_services.id)
+--     INNER JOIN services AS child_services ON (child_spans.service_id = child_services.id)
+-- GROUP BY source_services.name, child_services.name;
 
 -- -- name: FindTraceIDs :many
 -- SELECT DISTINCT spans.trace_id
@@ -77,7 +77,8 @@ SELECT
   spans.kind as kind,
   services.name as process_name,
   spans.process_tags as process_tags,
-  spans.logs as logs
+  spans.logs as logs,
+  spans.refs as refs
 FROM spans 
   INNER JOIN operations ON (spans.operation_id = operations.id)
   INNER JOIN services ON (spans.service_id = services.id)
@@ -97,14 +98,15 @@ INSERT INTO spans (
   process_tags,
   warnings,
   kind,
-  logs
+  logs,
+  refs
 )
 VALUES(
   sqlc.arg(span_id)::BYTEA,
   sqlc.arg(trace_id)::BYTEA,
   sqlc.arg(operation_id)::BIGINT,
   sqlc.arg(flags)::BIGINT,
-  sqlc.arg(start_time)::TIMESTAMPTZ,
+  sqlc.arg(start_time)::TIMESTAMP,
   sqlc.arg(duration)::INTERVAL,
   sqlc.arg(tags)::JSONB,
   sqlc.arg(service_id)::BIGINT,
@@ -112,20 +114,21 @@ VALUES(
   sqlc.arg(process_tags)::JSONB,
   sqlc.arg(warnings)::TEXT[],
   sqlc.arg(kind)::SPANKIND,
-  sqlc.arg(logs)::JSONB
+  sqlc.arg(logs)::JSONB,
+  sqlc.arg(refs)::JSONB
 )
 RETURNING spans.hack_id;
 
--- name: InsertSpanRefs :copyfrom
-INSERT INTO spanrefs (
-  source_span_id,
-  child_span_id,
-  trace_id,
-  ref_type
-)
-VALUES (
-  sqlc.arg(source_span_id),
-  sqlc.arg(child_span_id),
-  sqlc.arg(trace_id),
-  sqlc.arg(ref_type)
-);
+-- -- name: InsertSpanRefs :copyfrom
+-- INSERT INTO spanrefs (
+--   source_span_id,
+--   child_span_id,
+--   trace_id,
+--   ref_type
+-- )
+-- VALUES (
+--   sqlc.arg(source_span_id),
+--   sqlc.arg(child_span_id),
+--   sqlc.arg(trace_id),
+--   sqlc.arg(ref_type)
+-- );

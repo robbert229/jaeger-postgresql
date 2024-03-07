@@ -4,12 +4,14 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/hashicorp/go-hclog"
 	"github.com/jackc/pgx/v5"
+	"github.com/robbert229/jaeger-postgresql/internal/sql"
 )
 
 func TruncateAll(conn *pgx.Conn) error {
 	ctx := context.Background()
-	tables := []string{"operations", "services", "spanrefs", "spans"}
+	tables := []string{"operations", "services", "spans"}
 	for _, table := range tables {
 		if _, err := conn.Exec(ctx, fmt.Sprintf("TRUNCATE %s CASCADE", table)); err != nil {
 			return err
@@ -36,6 +38,11 @@ func Harness(t interface {
 	Helper()
 }) (*pgx.Conn, func() error) {
 	t.Helper()
+
+	err := sql.Migrate(hclog.NewNullLogger(), "postgres://postgres:password@localhost:5432/jaeger")
+	if err != nil {
+		t.Fatal("failed to migrate database", err)
+	}
 
 	conn, err := pgx.Connect(context.Background(), "postgres://postgres:password@localhost:5432/jaeger")
 	if err != nil {
