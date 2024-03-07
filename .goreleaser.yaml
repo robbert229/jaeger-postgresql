@@ -34,7 +34,7 @@ release:
   name_template: 'v{{ .Version }}'
   github:
     owner: robbert229
-    name: github.com/robbert229/jaeger-postgresql
+    name: jaeger-postgresql
 
 # modelines, feel free to remove those if you don't want/use them:
 # yaml-language-server: $schema=https://goreleaser.com/static/schema-pro.json
