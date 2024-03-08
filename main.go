@@ -2,8 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
-	"flag"
 	"os"
 
 	"github.com/robbert229/jaeger-postgresql/internal/sql"
@@ -15,41 +13,25 @@ import (
 	"github.com/jaegertracing/jaeger/plugin/storage/grpc/shared"
 )
 
-// Configuration is the main configuration struct for the github.com/robbert229/jaeger-postgresql plugin.
-type Configuration struct {
-	DatabaseURL string `json:"database_url"`
-}
-
 func main() {
 	logger := hclog.New(&hclog.LoggerOptions{
-		Name:  "github.com/robbert229/jaeger-postgresql",
+		Name:  "jaeger-postgresql",
 		Level: hclog.Warn, // Jaeger only captures >= Warn, so don't bother logging below Warn
 	})
 
-	var configPath string
-	flag.StringVar(&configPath, "config", "", "A path to the plugin's configuration file")
-	flag.Parse()
-
-	var config Configuration
-	configBytes, err := os.ReadFile(configPath)
-	if err != nil {
-		logger.Error("failed to read configuration file", "error", err)
+	databaseURL := os.Getenv("DATABASE_URL")
+	if databaseURL == "" {
+		logger.Error("invalid database url")
 		os.Exit(1)
 	}
 
-	err = json.Unmarshal(configBytes, &config)
-	if err != nil {
-		logger.Error("failed to parse configuration", "error", err)
-		os.Exit(1)
-	}
-
-	err = sql.Migrate(logger, config.DatabaseURL)
+	err := sql.Migrate(logger, databaseURL)
 	if err != nil {
 		logger.Error("failed to migrate database", "error", err)
 		os.Exit(1)
 	}
 
-	pgxconfig, err := pgxpool.ParseConfig(config.DatabaseURL)
+	pgxconfig, err := pgxpool.ParseConfig(databaseURL)
 	if err != nil {
 		logger.Error("failed to parse database url", "error", err)
 		os.Exit(1)
