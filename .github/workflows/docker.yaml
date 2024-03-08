@@ -25,5 +25,5 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - uses: docker/setup-qemu-action@v2
-      - run: docker build -t ghcr.io/robbert229/jaeger-postgresql:${{ github.event_name }} .
-      - run: docker push ghcr.io/robbert229/jaeger-postgresql:${{ github.event_name }}
+      - run: docker build -t ghcr.io/robbert229/jaeger-postgresql:${{ github.ref_name }} .
+      - run: docker push ghcr.io/robbert229/jaeger-postgresql:${{ github.ref_name }}
