@@ -16,4 +16,4 @@ COPY --from=builder /app/jaeger-postgresql .
 COPY ./hack/run.sh /app/run.sh
 RUN chmod +x /app/run.sh
 
-CMD ["./run.sh"]
+CMD ["sh", "./run.sh"]
