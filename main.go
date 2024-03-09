@@ -85,7 +85,10 @@ func ProvidePgxPool() any {
 
 		pgxconfig.MaxConns = maxConns
 
-		pool, err := pgxpool.NewWithConfig(context.Background(), pgxconfig)
+		ctx, cancelFn := context.WithTimeout(context.Background(), time.Second*10)
+		defer cancelFn()
+
+		pool, err := pgxpool.NewWithConfig(ctx, pgxconfig)
 		if err != nil {
 			return nil, fmt.Errorf("failed to connect to the postgres database: %w", err)
 		}
