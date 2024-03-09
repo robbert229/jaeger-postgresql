@@ -10,7 +10,6 @@ import (
 	"os"
 	"time"
 
-	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jaegertracing/jaeger/plugin/storage/grpc/shared"
 	"github.com/jaegertracing/jaeger/storage/dependencystore"
@@ -91,8 +90,6 @@ func ProvidePgxPool() any {
 		// handle timeout duration
 		connectTimeoutDuration := time.Second * 10
 		pgxconfig.ConnConfig.ConnectTimeout = connectTimeoutDuration
-
-		pgxconfig.ConnConfig.DefaultQueryExecMode = pgx.QueryExecModeSimpleProtocol
 
 		ctx, cancelFn := context.WithTimeout(context.Background(), connectTimeoutDuration)
 		defer cancelFn()
