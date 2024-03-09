@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: jaeger-postgresql
-          image: "ghcr.io/robbert229/jaeger-postgresql:v1.0.0"
+          image: "ghcr.io/robbert229/jaeger-postgresql/jaeger-postgresql:v1.0.0"
           args:
             - "--log-level"
             - "warn"
