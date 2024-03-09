@@ -1,10 +1,13 @@
 DBSTRING=postgres://postgres:password@localhost:5432/jaeger
 JAEGER_VERSION=1.54.0
 
-.PHONY: dev
-dev:
-	go build .
-	SPAN_STORAGE_TYPE="grpc-plugin" GRPC_STORAGE_PLUGIN_BINARY=./jaeger-postgresql GRPC_STORAGE_PLUGIN_CONFIGURATION_FILE=./hack/config.yaml ./hack/jaeger-all-in-one 
+.PHONY: run-plugin
+run-plugin:
+	go run . -database.url=$(DBSTRING)
+
+.PHONY: run-jaeger
+run-jaeger:
+	SPAN_STORAGE_TYPE='grpc-plugin' ./hack/jaeger-all-in-one --grpc-storage.server='127.0.0.1:12345' --query.enable-tracing=false
 
 .PHONY: install-all-in-one
 install-all-in-one:
@@ -12,19 +15,19 @@ install-all-in-one:
 	tar  -C ./hack --extract --file ./hack/jaeger-$(JAEGER_VERSION)-linux-amd64.tar.gz jaeger-$(JAEGER_VERSION)-linux-amd64/jaeger-all-in-one
 	rm ./hack/jaeger-$(JAEGER_VERSION)-linux-amd64.tar.gz
 	mv ./hack/jaeger-$(JAEGER_VERSION)-linux-amd64/jaeger-all-in-one ./hack/jaeger-all-in-one
-	rmdir ./hack/jaeger-$(JAEGER_VERSION)-linux-amd64/	
+	rmdir ./hack/jaeger-$(JAEGER_VERSION)-linux-amd64/
 
 .PHONY: generate
-generate: 
+generate:
 	sqlc generate
-	
+
 # Install DB migration tool
 .PHONY: install-goose
 install-goose:
 	@sh -c "which goose > /dev/null || go install github.com/pressly/goose/v3/cmd/goose@latest"
 
 .PHONY: install-sqlc
-install-sqlc: 
+install-sqlc:
 	@sh -c "which sqlc > /dev/null || go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest"
 
 # Migrate SQL schema to latest version
