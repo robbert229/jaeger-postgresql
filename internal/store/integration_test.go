@@ -2,13 +2,13 @@ package store
 
 import (
 	"context"
+	"log/slog"
 	"testing"
 	"time"
 
 	"github.com/robbert229/jaeger-postgresql/internal/sql"
 	"github.com/robbert229/jaeger-postgresql/internal/sqltest"
 
-	"github.com/hashicorp/go-hclog"
 	"github.com/stretchr/testify/require"
 
 	"github.com/jaegertracing/jaeger/model"
@@ -22,7 +22,7 @@ func TestJaegerStorageIntegration(t *testing.T) {
 
 	q := sql.New(conn)
 
-	logger := hclog.Default()
+	logger := slog.Default()
 	reader := NewReader(q, logger.With("component", "reader"))
 	writer := NewWriter(q, logger.With("component", "writer"))
 	si := jaeger_integration_tests.StorageIntegration{
@@ -47,8 +47,9 @@ func TestSpans(t *testing.T) {
 
 	require.Nil(t, cleanup())
 
-	w := NewWriter(q, hclog.NewNullLogger())
-	r := NewReader(q, hclog.NewNullLogger())
+	logger := slog.Default()
+	w := NewWriter(q, logger)
+	r := NewReader(q, logger)
 
 	ts := TruncateTime(time.Now())
 

@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log/slog"
 
 	"github.com/robbert229/jaeger-postgresql/internal/sql"
 
-	hclog "github.com/hashicorp/go-hclog"
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/jaegertracing/jaeger/model"
@@ -20,11 +20,11 @@ var _ io.Closer = (*Writer)(nil)
 // Writer handles all writes to PostgreSQL 2.x for the Jaeger data model
 type Writer struct {
 	q      *sql.Queries
-	logger hclog.Logger
+	logger *slog.Logger
 }
 
 // NewWriter returns a Writer.
-func NewWriter(q *sql.Queries, logger hclog.Logger) *Writer {
+func NewWriter(q *sql.Queries, logger *slog.Logger) *Writer {
 	w := &Writer{
 		q:      q,
 		logger: logger,
@@ -40,12 +40,6 @@ func (w *Writer) Close() error {
 
 // WriteSpan saves the span into PostgreSQL
 func (w *Writer) WriteSpan(ctx context.Context, span *model.Span) error {
-	w.logger.Info(
-		"inserting span",
-		"span", span.SpanID,
-		"trace_id", span.TraceID,
-		"operation_name", span.OperationName,
-	)
 	err := w.q.UpsertService(ctx, span.Process.ServiceName)
 	if err != nil {
 		return fmt.Errorf("failed to upsert span service: %w", err)

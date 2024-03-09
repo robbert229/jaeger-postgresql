@@ -3,9 +3,9 @@ package sqltest
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"os"
 
-	"github.com/hashicorp/go-hclog"
 	"github.com/jackc/pgx/v5"
 	"github.com/robbert229/jaeger-postgresql/internal/sql"
 )
@@ -48,7 +48,7 @@ func Harness(t interface {
 }) (*pgx.Conn, func() error) {
 	t.Helper()
 
-	err := sql.Migrate(hclog.NewNullLogger(), getDatabaseURL())
+	err := sql.Migrate(slog.Default(), getDatabaseURL())
 	if err != nil {
 		t.Fatal("failed to migrate database", err)
 	}

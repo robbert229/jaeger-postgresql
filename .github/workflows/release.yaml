@@ -16,7 +16,7 @@ permissions:
   id-token: write
 
 jobs:
-  goreleaser:
+  publish:
     runs-on: ubuntu-latest
     env:
       flags: ""
@@ -37,3 +37,10 @@ jobs:
           args: release --clean ${{ env.flags }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - uses: ko-build/setup-ko@v0.6
+      - name: publish
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  
+        run: |
+          ko resolve -t ${{ github.ref_name }} -f k8s/ > release.yaml
+          gh release upload ${{ github.ref_name }} release.yaml

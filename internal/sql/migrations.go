@@ -3,10 +3,10 @@ package sql
 import (
 	"embed"
 	"fmt"
+	"log/slog"
 	"strings"
 	"sync"
 
-	"github.com/hashicorp/go-hclog"
 	"github.com/pressly/goose/v3"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
@@ -22,7 +22,7 @@ var (
 var _ goose.Logger = (*gooseLogger)(nil)
 
 type gooseLogger struct {
-	hclog.Logger
+	*slog.Logger
 }
 
 func (l *gooseLogger) Fatal(v ...interface{}) {
@@ -46,7 +46,7 @@ func (l *gooseLogger) Printf(msg string, v ...interface{}) {
 	l.Logger.Info(fmt.Sprintf(trimmed, v...))
 }
 
-func Migrate(logger hclog.Logger, connStr string) error {
+func Migrate(logger *slog.Logger, connStr string) error {
 	mu.Lock()
 	defer mu.Unlock()
 
