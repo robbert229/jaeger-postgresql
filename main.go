@@ -76,16 +76,23 @@ func ProvidePgxPool() any {
 			return nil, fmt.Errorf("failed to parse database url")
 		}
 
-		var maxConns int32
-		if databaseMaxConnsFlag == nil {
-			maxConns = 20
-		} else {
-			maxConns = int32(*databaseMaxConnsFlag)
+		// handle max conns
+		{
+			var maxConns int32
+			if databaseMaxConnsFlag == nil {
+				maxConns = 20
+			} else {
+				maxConns = int32(*databaseMaxConnsFlag)
+			}
+
+			pgxconfig.MaxConns = maxConns
 		}
 
-		pgxconfig.MaxConns = maxConns
+		// handle timeout duration
+		connectTimeoutDuration := time.Second * 10
+		pgxconfig.ConnConfig.ConnectTimeout = connectTimeoutDuration
 
-		ctx, cancelFn := context.WithTimeout(context.Background(), time.Second*10)
+		ctx, cancelFn := context.WithTimeout(context.Background(), connectTimeoutDuration)
 		defer cancelFn()
 
 		pool, err := pgxpool.NewWithConfig(ctx, pgxconfig)
