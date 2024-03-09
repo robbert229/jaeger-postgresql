@@ -21,7 +21,6 @@ import (
 	"google.golang.org/grpc"
 
 	"go.uber.org/fx"
-	"go.uber.org/fx/fxevent"
 )
 
 // ProvideLogger returns a function that provides a logger
@@ -240,11 +239,9 @@ func main() {
 	flag.Parse()
 
 	fx.New(
-		fx.WithLogger(
-			func(logger *slog.Logger) fxevent.Logger {
-				return &fxslog.SlogLogger{Logger: logger.With("component", "uber/fx")}
-			},
-		),
+		fxslog.WithLogger(func(logger *slog.Logger) *slog.Logger {
+			return logger.With("component", "uber/fx")
+		}),
 		fx.Provide(
 			ProvideLogger(),
 			ProvidePgxPool(),
