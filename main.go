@@ -16,7 +16,6 @@ import (
 	"github.com/jaegertracing/jaeger/storage/spanstore"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/robbert229/fxslog"
-	_ "github.com/robbert229/fxslog"
 	"github.com/robbert229/jaeger-postgresql/internal/sql"
 	"github.com/robbert229/jaeger-postgresql/internal/store"
 	"google.golang.org/grpc"
@@ -91,6 +90,8 @@ func ProvidePgxPool() any {
 			return nil, fmt.Errorf("failed to connect to the postgres database: %w", err)
 		}
 
+		logger.Info("connected to postgres")
+
 		lc.Append(fx.Hook{
 			OnStop: func(ctx context.Context) error {
 				pool.Close()
@@ -144,17 +145,23 @@ func ProvideHandler() any {
 
 // ProvideGRPCServer provides a grpc server.
 func ProvideGRPCServer() any {
-	return func(lc fx.Lifecycle) (*grpc.Server, error) {
+	return func(lc fx.Lifecycle, logger *slog.Logger) (*grpc.Server, error) {
 		srv := grpc.NewServer()
 
-		if grpcHostPort == nil {
+		if grpcHostPortFlag == nil {
 			return nil, fmt.Errorf("invalid grpc-server.host-port")
 		}
 
-		lis, err := net.Listen("tcp", *grpcHostPort)
+		if *grpcHostPortFlag == "" {
+			return nil, fmt.Errorf("invalid grpc-server.host-port given: %s", *grpcHostPortFlag)
+		}
+
+		lis, err := net.Listen("tcp", *grpcHostPortFlag)
 		if err != nil {
 			return nil, fmt.Errorf("failed to listen: %w", err)
 		}
+
+		logger.Info("grpc server started", "addr", *grpcHostPortFlag)
 
 		lc.Append(fx.StartStopHook(
 			func(ctx context.Context) error {
@@ -174,17 +181,27 @@ func ProvideGRPCServer() any {
 
 // ProvideAdminServer provides the admin http server.
 func ProvideAdminServer() any {
-	return func(lc fx.Lifecycle) (*http.ServeMux, error) {
+	return func(lc fx.Lifecycle, logger *slog.Logger) (*http.ServeMux, error) {
 		mux := http.NewServeMux()
 
 		srv := http.Server{
 			Handler: mux,
 		}
 
-		lis, err := net.Listen("tcp", *adminHttpHostPort)
+		if adminHttpHostPortFlag == nil {
+			return nil, fmt.Errorf("no admin.http.host-port given")
+		}
+
+		if *adminHttpHostPortFlag == "" {
+			return nil, fmt.Errorf("invalid admin.http.host-port given: %s", *adminHttpHostPortFlag)
+		}
+
+		lis, err := net.Listen("tcp", *adminHttpHostPortFlag)
 		if err != nil {
 			return nil, fmt.Errorf("failed to listen: %w", err)
 		}
+
+		logger.Info("admin server started", "addr", lis.Addr())
 
 		lc.Append(fx.StartStopHook(
 			func(ctx context.Context) error {
@@ -202,11 +219,11 @@ func ProvideAdminServer() any {
 }
 
 var (
-	databaseURLFlag      = flag.String("database.url", "", "the postgres connection url to use to connect to the database")
-	databaseMaxConnsFlag = flag.Int("database.max-conns", 20, "Max number of database connections of which the plugin will try to maintain at any given time")
-	loglevelFlag         = flag.String("log-level", "warn", "Minimal allowed log level")
-	grpcHostPort         = flag.String("grpc-server.host-port", ":12345", "the host:port (eg 127.0.0.1:12345 or :12345) of the storage provider's gRPC server")
-	adminHttpHostPort    = flag.String("admin.http.host-port", ":12346", "The host:port (e.g. 127.0.0.1:12346 or :12346) for the admin server, including health check, /metrics, etc.")
+	databaseURLFlag       = flag.String("database.url", "", "the postgres connection url to use to connect to the database")
+	databaseMaxConnsFlag  = flag.Int("database.max-conns", 20, "Max number of database connections of which the plugin will try to maintain at any given time")
+	loglevelFlag          = flag.String("log-level", "warn", "Minimal allowed log level")
+	grpcHostPortFlag      = flag.String("grpc-server.host-port", ":12345", "the host:port (eg 127.0.0.1:12345 or :12345) of the storage provider's gRPC server")
+	adminHttpHostPortFlag = flag.String("admin.http.host-port", ":12346", "The host:port (e.g. 127.0.0.1:12346 or :12346) for the admin server, including health check, /metrics, etc.")
 )
 
 func main() {

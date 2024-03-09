@@ -3,7 +3,7 @@ JAEGER_VERSION=1.54.0
 
 .PHONY: run-plugin
 run-plugin:
-	go run . -database.url=$(DBSTRING)
+	go run . -database.url=$(DBSTRING) -log-level=debug
 
 .PHONY: run-jaeger
 run-jaeger:
