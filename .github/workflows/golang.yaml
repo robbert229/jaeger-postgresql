@@ -39,5 +39,6 @@ jobs:
         uses: nick-fields/retry@v2
         with:
           max_attempts: 3
+          timeout_minutes: 5
           command: |
             TEST_DATABASE_URL='postgres://postgres:password@localhost:5432/jaeger' go test -test.parallel=1 ./...
