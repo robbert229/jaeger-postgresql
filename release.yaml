@@ -1,3 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jaeger-postgresql
+  labels:
+    component: jaeger-postgresql
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      component: jaeger-postgresql
+  template:
+    metadata:
+      labels:
+        component: jaeger-postgresql
+    spec:
+      containers:
+        - name: jaeger-postgresql
+          image: "ghcr.io/robbert229/jaeger-postgresql/jaeger-postgresql:v1.0.0"
+          args:
+            - "--log-level"
+            - "warn"
+            - "--database.url"
+            - "postgresql://postgres:password@localhost:5432/jaeger"
+            - "--database.max-conns"
+            - "25"
+            - "--grpc-server.host-port"
+            - "0.0.0.0:12345"
+            - "--admin.http.host-port"
+            - "0.0.0.0:12346"
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: grpc
+              containerPort: 12345
+              protocol: TCP
+            - name: metrics
+              containerPort: 12346
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /
+              port: metrics
+          readinessProbe:
+            httpGet:
+              path: /
+              port: metrics
+          resources:
+            limits:
+              cpu: 1000m
+              memory: 1024Mi
+            requests:
+              cpu: 250m
+              memory: 256Mi
+
+---
 apiVersion: v1
 kind: Service
 metadata:

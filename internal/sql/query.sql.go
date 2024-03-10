@@ -11,6 +11,20 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const cleanSpans = `-- name: CleanSpans :execrows
+
+DELETE FROM spans
+WHERE spans.start_time < $1::TIMESTAMP
+`
+
+func (q *Queries) CleanSpans(ctx context.Context, pruneBefore pgtype.Timestamp) (int64, error) {
+	result, err := q.db.Exec(ctx, cleanSpans, pruneBefore)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
 const getOperationID = `-- name: GetOperationID :one
 SELECT id 
 FROM operations 
