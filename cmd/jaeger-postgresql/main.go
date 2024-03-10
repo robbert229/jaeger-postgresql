@@ -7,7 +7,6 @@ import (
 	"log/slog"
 	"net"
 	"net/http"
-	"os"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -16,40 +15,17 @@ import (
 	"github.com/jaegertracing/jaeger/storage/spanstore"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/robbert229/fxslog"
+	"github.com/robbert229/jaeger-postgresql/internal/logger"
 	"github.com/robbert229/jaeger-postgresql/internal/sql"
 	"github.com/robbert229/jaeger-postgresql/internal/store"
-	"google.golang.org/grpc"
-
 	"go.uber.org/fx"
+	"google.golang.org/grpc"
 )
 
 // ProvideLogger returns a function that provides a logger
 func ProvideLogger() any {
 	return func() (*slog.Logger, error) {
-		levelFn := func() (slog.Level, error) {
-			if loglevelFlag == nil {
-				return slog.LevelWarn, nil
-			}
-
-			switch *loglevelFlag {
-			case "info":
-				return slog.LevelInfo, nil
-			case "warn":
-				return slog.LevelWarn, nil
-			case "error":
-				return slog.LevelError, nil
-			case "debug":
-				return slog.LevelDebug, nil
-			default:
-				return 0, fmt.Errorf("invalid log level: %s", *loglevelFlag)
-			}
-		}
-		level, err := levelFn()
-		if err != nil {
-			return nil, fmt.Errorf("failed to build logger: %w", err)
-		}
-
-		return slog.New(slog.NewJSONHandler(os.Stderr, &slog.HandlerOptions{Level: level})), nil
+		return logger.New(loglevelFlag)
 	}
 }
 

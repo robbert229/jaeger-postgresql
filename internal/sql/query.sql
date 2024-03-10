@@ -119,16 +119,7 @@ VALUES(
 )
 RETURNING spans.hack_id;
 
--- -- name: InsertSpanRefs :copyfrom
--- INSERT INTO spanrefs (
---   source_span_id,
---   child_span_id,
---   trace_id,
---   ref_type
--- )
--- VALUES (
---   sqlc.arg(source_span_id),
---   sqlc.arg(child_span_id),
---   sqlc.arg(trace_id),
---   sqlc.arg(ref_type)
--- );
+-- name: CleanSpans :execrows
+
+DELETE FROM spans
+WHERE spans.start_time < sqlc.arg(prune_before)::TIMESTAMP;

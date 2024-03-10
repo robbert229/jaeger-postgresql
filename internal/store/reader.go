@@ -184,8 +184,7 @@ func (r *Reader) FindTraceIDs(ctx context.Context, query *spanstore.TraceQueryPa
 		StartTimeMinimum:       EncodeTimestamp(query.StartTimeMin),
 		StartTimeMinimumEnable: query.StartTimeMin.After(time.Time{}),
 		StartTimeMaximum:       EncodeTimestamp(query.StartTimeMax),
-		// StartTimeMaximumEnable: query.StartTimeMax.After(time.Time{}),
-		StartTimeMaximumEnable: false, // maintaining feature parity for now.
+		StartTimeMaximumEnable: query.StartTimeMax.After(time.Time{}),
 		DurationMinimum:        EncodeInterval(query.DurationMin),
 		DurationMinimumEnable:  query.DurationMin > 0*time.Second,
 		DurationMaximum:        EncodeInterval(query.DurationMax),

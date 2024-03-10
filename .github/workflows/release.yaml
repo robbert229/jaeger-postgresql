@@ -22,8 +22,6 @@ jobs:
     env:
       flags: ""
     steps:
-      - if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
-        run: echo "flags=--snapshot" >> $GITHUB_ENV
       - name: Checkout
         uses: actions/checkout@v4
         with:
