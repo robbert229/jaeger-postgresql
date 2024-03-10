@@ -51,33 +51,3 @@ spec:
             requests:
               cpu: 250m
               memory: 256Mi
----
-apiVersion: batch/v1
-kind: CronJob
-metadata:
-  name: jaeger-postgresql-cleaner
-  labels:
-    component: jaeger-postgresql-cleaner
-spec:
-  schedule: "0 0 * * *"
-  concurrencyPolicy: "Replace"
-  jobTemplate:
-    metadata:
-      name: jaeger-postgresql-cleaner
-      labels:
-        component: jaeger-postgresql-cleaner
-    spec:
-      template:
-        spec:
-          restartPolicy: OnFailure
-          containers:
-          - name: jaeger-postgresql-cleaner
-            image: "ko://github.com/robbert229/jaeger-postgresql/cmd/jaeger-postgresql-cleaner"
-            imagePullPolicy: Always
-            resources:
-              limits:
-                cpu: 250m
-                memory: 256Mi
-              requests:
-                cpu: 250m
-                memory: 256Mi
