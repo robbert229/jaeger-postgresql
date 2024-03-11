@@ -123,3 +123,7 @@ RETURNING spans.hack_id;
 
 DELETE FROM spans
 WHERE spans.start_time < sqlc.arg(prune_before)::TIMESTAMP;
+
+-- name: GetSpansDiskSize :one
+
+SELECT pg_total_relation_size('spans');

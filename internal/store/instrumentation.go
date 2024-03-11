@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	promNamespace = "jaeger"
+	promNamespace = "jaeger_postgresql"
 )
 
 // reader

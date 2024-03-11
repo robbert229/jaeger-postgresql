@@ -13,6 +13,8 @@ import (
 	"github.com/jaegertracing/jaeger/plugin/storage/grpc/shared"
 	"github.com/jaegertracing/jaeger/storage/dependencystore"
 	"github.com/jaegertracing/jaeger/storage/spanstore"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/robbert229/fxslog"
 	"github.com/robbert229/jaeger-postgresql/internal/logger"
@@ -211,6 +213,14 @@ var (
 	adminHttpHostPortFlag = flag.String("admin.http.host-port", ":12346", "The host:port (e.g. 127.0.0.1:12346 or :12346) for the admin server, including health check, /metrics, etc.")
 )
 
+var (
+	spansTableDiskSizeGuage = promauto.NewGauge(prometheus.GaugeOpts{
+		Namespace: "jaeger_postgresql",
+		Name:      "spans_table_bytes",
+		Help:      "The size of the spans table in bytes",
+	})
+)
+
 func main() {
 	flag.Parse()
 
@@ -230,6 +240,32 @@ func main() {
 		),
 		fx.Invoke(func(srv *grpc.Server, handler *shared.GRPCHandler) error {
 			return handler.Register(srv)
+		}),
+		fx.Invoke(func(conn *pgxpool.Pool, logger *slog.Logger, lc fx.Lifecycle) {
+			ctx, cancelFn := context.WithCancel(context.Background())
+			lc.Append(fx.StopHook(cancelFn))
+
+			go func() {
+				q := sql.New(conn)
+				ticker := time.NewTicker(time.Second * 5)
+				defer ticker.Stop()
+
+				for {
+					select {
+					case <-ctx.Done():
+						return
+					case <-ticker.C:
+						byteCount, err := q.GetSpansDiskSize(ctx)
+						if err != nil {
+							logger.Error("failed to query for disk size", "err", err)
+							continue
+						}
+
+						spansTableDiskSizeGuage.Set(float64(byteCount))
+
+					}
+				}
+			}()
 		}),
 		fx.Invoke(func(mux *http.ServeMux, conn *pgxpool.Pool) {
 			mux.Handle("/metrics", promhttp.Handler())

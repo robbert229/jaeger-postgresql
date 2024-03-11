@@ -119,6 +119,18 @@ func (q *Queries) GetServices(ctx context.Context) ([]string, error) {
 	return items, nil
 }
 
+const getSpansDiskSize = `-- name: GetSpansDiskSize :one
+
+SELECT pg_total_relation_size('spans')
+`
+
+func (q *Queries) GetSpansDiskSize(ctx context.Context) (int64, error) {
+	row := q.db.QueryRow(ctx, getSpansDiskSize)
+	var pg_total_relation_size int64
+	err := row.Scan(&pg_total_relation_size)
+	return pg_total_relation_size, err
+}
+
 const getTraceSpans = `-- name: GetTraceSpans :many
 SELECT
   spans.span_id as span_id,
