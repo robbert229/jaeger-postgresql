@@ -1,6 +1,6 @@
-DBSTRING=postgres://postgres:password@localhost:5432/jaeger
-JAEGER_VERSION=1.54.0
-VERSION='v1.3.0'
+DBSTRING = postgres://postgres:password@localhost:5432/jaeger
+JAEGER_VERSION = 1.54.0
+VERSION ?= 'v1.3.0'
 
 .PHONY: package
 package:
