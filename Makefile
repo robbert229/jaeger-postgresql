@@ -1,9 +1,9 @@
 DBSTRING = postgres://postgres:password@localhost:5432/jaeger
 JAEGER_VERSION = 1.54.0
-VERSION ?= 'v1.3.0'
+VERSION ?= 'v1.4.0'
 
-.PHONY: package
-package:
+.PHONY: publish
+publish:
 	KO_DOCKER_REPO=ghcr.io/robbert229/jaeger-postgresql/ ko resolve --base-import-paths -t $(VERSION) -f ./charts/jaeger-postgresql/values-template.yaml > ./charts/jaeger-postgresql/values.yaml
 	helm package ./charts/jaeger-postgresql --app-version $(VERSION) --version $(VERSION) --destination=./hack/charts/
 	helm push ./hack/charts/jaeger-postgresql-$(VERSION).tgz oci://ghcr.io/robbert229/jaeger-postgresql/charts
