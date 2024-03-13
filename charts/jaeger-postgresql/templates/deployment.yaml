@@ -1,0 +1,86 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "jaeger-postgresql.fullname" . }}
+  labels:
+    {{- include "jaeger-postgresql.labels" . | nindent 4 }}
+    component: service
+spec:
+  replicas: {{ .Values.service.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "jaeger-postgresql.selectorLabels" . | nindent 6 }}
+      component: service
+  template:
+    metadata:
+      {{- with .Values.service.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "jaeger-postgresql.labels" . | nindent 8 }}
+        {{- with .Values.service.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        component: service
+    spec:
+      {{- with .Values.service.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        {{- toYaml .Values.service.podSecurityContext | nindent 8 }}
+      containers:
+        - name: jaeger-postgresql
+          args:
+            - "--log-level"
+            - "{{ .Values.service.logLevel}}"
+            - "--database.url"
+            - "{{ .Values.database.url }}"
+            - "--database.max-conns"
+            - "{{ .Values.database.maxConns}}"
+            - "--grpc-server.host-port"
+            - "0.0.0.0:12345"
+            - "--admin.http.host-port"
+            - "0.0.0.0:12346"
+          securityContext:
+            {{- toYaml .Values.service.securityContext | nindent 12 }}
+          image: "{{ .Values.service.image }}"
+          imagePullPolicy: {{ .Values.service.imagePullPolicy }}
+          ports:
+            - name: grpc
+              containerPort: 12345
+              protocol: TCP
+            - name: metrics
+              containerPort: 12346
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /
+              port: metrics
+          readinessProbe:
+            httpGet:
+              path: /
+              port: metrics
+          resources:
+            {{- toYaml .Values.service.resources | nindent 12 }}
+          {{- with .Values.service.volumeMounts }}
+          volumeMounts:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+      {{- with .Values.service.volumes }}
+      volumes:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.service.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.service.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.service.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

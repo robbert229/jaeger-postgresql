@@ -1,0 +1,110 @@
+database:
+  url: "postgresql://postgres:password@localhost:5432/jaeger"
+  maxConns: 10
+
+service:
+  logLevel: "info"
+
+  replicaCount: 2
+
+  image: ko://github.com/robbert229/jaeger-postgresql/cmd/jaeger-postgresql
+  imagePullPolicy: IfNotPresent
+
+  imagePullSecrets: []
+  nameOverride: ""
+  fullnameOverride: ""
+
+  podAnnotations: {}
+  podLabels: {}
+
+  podSecurityContext: 
+    fsGroup: 2000
+
+  securityContext:
+    capabilities:
+      drop:
+      - ALL
+    readOnlyRootFilesystem: true
+    runAsNonRoot: true
+    runAsUser: 1000
+
+  resources: {}
+    # limits:
+    #   cpu: 100m
+    #   memory: 128Mi
+    # requests:
+    #   cpu: 100m
+    #   memory: 128Mi
+
+  # Additional volumes on the output Deployment definition.
+  volumes: []
+  # - name: foo
+  #   secret:
+  #     secretName: mysecret
+  #     optional: false
+
+  # Additional volumeMounts on the output Deployment definition.
+  volumeMounts: []
+  # - name: foo
+  #   mountPath: "/etc/foo"
+  #   readOnly: true
+
+  nodeSelector: {}
+
+  tolerations: []
+
+  affinity: {}
+
+cleaner:
+  enabled: true
+
+  maxSpanAge: 24h
+  logLevel: "debug"
+
+  image: ko://github.com/robbert229/jaeger-postgresql/cmd/jaeger-postgresql-cleaner
+  imagePullPolicy: IfNotPresent
+
+  imagePullSecrets: []
+  nameOverride: ""
+  fullnameOverride: ""
+
+  podAnnotations: {}
+  podLabels: {}
+
+  podSecurityContext: 
+    fsGroup: 2000
+
+  securityContext:
+    capabilities:
+      drop:
+      - ALL
+    readOnlyRootFilesystem: true
+    runAsNonRoot: true
+    runAsUser: 1000
+
+  resources: {}
+    # limits:
+    #   cpu: 100m
+    #   memory: 128Mi
+    # requests:
+    #   cpu: 100m
+    #   memory: 128Mi
+
+  # Additional volumes on the output Deployment definition.
+  volumes: []
+  # - name: foo
+  #   secret:
+  #     secretName: mysecret
+  #     optional: false
+
+  # Additional volumeMounts on the output Deployment definition.
+  volumeMounts: []
+  # - name: foo
+  #   mountPath: "/etc/foo"
+  #   readOnly: true
+
+  nodeSelector: {}
+
+  tolerations: []
+
+  affinity: {}

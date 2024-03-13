@@ -17,5 +17,4 @@ vendor/
 jaeger/
 jaeger-all-in-one
 
-jaeger-postgresql
-jaeger-postgresql-cleaner
+*.tgz

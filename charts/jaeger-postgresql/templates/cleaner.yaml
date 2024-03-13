@@ -1,0 +1,83 @@
+{{ if .Values.cleaner.enabled }}
+
+apiVersion: {{ include "common.capabilities.cronjob.apiVersion" . }}
+kind: CronJob
+metadata:
+  name: {{ include "jaeger-postgresql.fullname" . }}-cleaner
+  labels:
+    {{- include "jaeger-postgresql.labels" . | nindent 4 }}
+    component: cleaner
+spec:
+  schedule: "0 0 * * *"
+  concurrencyPolicy: "Replace"
+  jobTemplate:
+    metadata:
+      {{- with .Values.cleaner.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}      
+      labels:
+        {{- include "jaeger-postgresql.labels" . | nindent 8 }}
+        {{- with .Values.cleaner.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        component: cleaner
+    spec:
+      template:
+        metadata:
+          {{- with .Values.cleaner.podAnnotations }}
+          annotations:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          labels:
+            {{- include "jaeger-postgresql.labels" . | nindent 12 }}
+            {{- with .Values.cleaner.podLabels }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+            component: cleaner
+        spec:
+          restartPolicy: OnFailure
+          {{- with .Values.cleaner.imagePullSecrets }}
+          imagePullSecrets:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          securityContext:
+            {{- toYaml .Values.cleaner.podSecurityContext | nindent 12 }}
+          containers:
+            - name: cleaner
+              args:
+                - "--log-level"
+                - "{{ .Values.cleaner.logLevel }}"
+                - "--database.url"
+                - "{{ .Values.database.url }}"
+                - "--database.max-conns"
+                - "{{ .Values.database.maxConns}}"
+                - "--max-span-age"
+                - "{{ .Values.cleaner.maxSpanAge }}"
+              securityContext:
+                {{- toYaml .Values.cleaner.securityContext | nindent 16 }}
+              image: "{{ .Values.cleaner.image }}"
+              imagePullPolicy: {{ .Values.cleaner.imagePullPolicy}}
+              resources:
+                {{- toYaml .Values.cleaner.resources | nindent 16 }}
+              {{- with .Values.cleaner.volumeMounts }}
+              volumeMounts:
+                {{- toYaml . | nindent 16 }}
+              {{- end }}
+          {{- with .Values.cleaner.volumes }}
+          volumes:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.cleaner.nodeSelector }}
+          nodeSelector:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.cleaner.affinity }}
+          affinity:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.cleaner.tolerations }}
+          tolerations:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+{{ end }}
