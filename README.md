@@ -46,3 +46,10 @@ configure jaeger to use Jaeger-PostgresQL for storage
 `SPAN_STORAGE_TYPE="grpc-plugin"`
 
 The official jaeger documentation is the best place to look for detailed instructions on using a external storage plugin. https://www.jaegertracing.io/docs/1.55/deployment/#storage-plugin
+
+## Legacy
+
+This project started out as a [fork](jozef-slezak/jaeger-postgresql), but was eventually completely rewritten to 
+* use the remote storage plugin interface
+* have its own dedicated helm chart
+* improved functionality such as a cleaning
