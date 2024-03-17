@@ -1,6 +1,6 @@
 # Jaeger-PostgresQL
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-1-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-2-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 
 PostgresQL is a great general purpose. Jaeger-PostgresQL is intended to allow jaeger
@@ -55,6 +55,14 @@ The official jaeger documentation is the best place to look for detailed instruc
 <!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
 <!-- prettier-ignore-start -->
 <!-- markdownlint-disable -->
+<table>
+  <tbody>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/jozef-slezak"><img src="https://avatars.githubusercontent.com/u/16844103?v=4?s=100" width="100px;" alt="Jozef Slezak"/><br /><sub><b>Jozef Slezak</b></sub></a><br /><a href="https://github.com/robbert229/jaeger-postgresql/commits?author=jozef-slezak" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="http://blog.johnrowley.co"><img src="https://avatars.githubusercontent.com/u/3454480?v=4?s=100" width="100px;" alt="John Rowley"/><br /><sub><b>John Rowley</b></sub></a><br /><a href="https://github.com/robbert229/jaeger-postgresql/commits?author=robbert229" title="Code">💻</a></td>
+    </tr>
+  </tbody>
+</table>
 
 <!-- markdownlint-restore -->
 <!-- prettier-ignore-end -->
