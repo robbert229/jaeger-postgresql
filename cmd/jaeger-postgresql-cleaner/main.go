@@ -9,10 +9,10 @@ import (
 
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/robbert229/fxslog"
 	"github.com/robbert229/jaeger-postgresql/internal/logger"
 	"github.com/robbert229/jaeger-postgresql/internal/sql"
 	"go.uber.org/fx"
+	"go.uber.org/fx/fxevent"
 )
 
 var (
@@ -103,8 +103,8 @@ func main() {
 	flag.Parse()
 
 	fx.New(
-		fxslog.WithLogger(func(logger *slog.Logger) *slog.Logger {
-			return logger.With("component", "uber/fx")
+		fx.WithLogger(func(logger *slog.Logger) fxevent.Logger {
+			return &fxevent.SlogLogger{Logger: logger.With("component", "uber/fx")}
 		}),
 		fx.Provide(
 			ProvideLogger(),
