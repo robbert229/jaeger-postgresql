@@ -7,7 +7,6 @@ require (
 	github.com/jaegertracing/jaeger v1.55.0
 	github.com/pressly/goose/v3 v3.19.2
 	github.com/prometheus/client_golang v1.19.0
-	github.com/robbert229/fxslog v1.1.0
 	github.com/stretchr/testify v1.9.0
 	go.opentelemetry.io/otel/trace v1.24.0
 	go.uber.org/fx v1.21.0

@@ -16,11 +16,11 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/robbert229/fxslog"
 	"github.com/robbert229/jaeger-postgresql/internal/logger"
 	"github.com/robbert229/jaeger-postgresql/internal/sql"
 	"github.com/robbert229/jaeger-postgresql/internal/store"
 	"go.uber.org/fx"
+	"go.uber.org/fx/fxevent"
 	"google.golang.org/grpc"
 )
 
@@ -225,8 +225,8 @@ func main() {
 	flag.Parse()
 
 	fx.New(
-		fxslog.WithLogger(func(logger *slog.Logger) *slog.Logger {
-			return logger.With("component", "uber/fx")
+		fx.WithLogger(func(logger *slog.Logger) fxevent.Logger {
+			return &fxevent.SlogLogger{Logger: logger.With("component", "uber/fx")}
 		}),
 		fx.Provide(
 			ProvideLogger(),
