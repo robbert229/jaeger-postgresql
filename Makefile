@@ -1,6 +1,6 @@
 DBSTRING = postgres://postgres:password@localhost:5432/jaeger
 JAEGER_VERSION = 1.54.0
-VERSION ?= 'v1.4.0'
+VERSION ?= 'v1.5.0' # x-release-please-version
 
 .PHONY: publish
 publish:
