@@ -133,19 +133,19 @@ func (r *Reader) FindTraces(ctx context.Context, query *spanstore.TraceQueryPara
 	}
 
 	response, err := r.q.FindTraceIDs(ctx, sql.FindTraceIDsParams{
-		ServiceName:            query.ServiceName,
-		ServiceNameEnable:      len(query.ServiceName) > 0,
-		OperationName:          query.OperationName,
-		OperationNameEnable:    len(query.OperationName) > 0,
-		StartTimeMinimum:       EncodeTimestamp(query.StartTimeMin),
-		StartTimeMinimumEnable: query.StartTimeMin.After(time.Time{}),
-		StartTimeMaximum:       EncodeTimestamp(query.StartTimeMax),
-		StartTimeMaximumEnable: query.StartTimeMax.After(time.Time{}),
-		DurationMinimum:        EncodeInterval(query.DurationMin),
-		DurationMinimumEnable:  query.DurationMin != time.Duration(0),
-		DurationMaximum:        EncodeInterval(query.DurationMax),
-		DurationMaximumEnable:  query.DurationMax != time.Duration(0),
-		NumTraces:              query.NumTraces,
+		ServiceName:                  query.ServiceName,
+		ServiceNameEnableFilter:      len(query.ServiceName) > 0,
+		OperationName:                query.OperationName,
+		OperationNameEnableFilter:    len(query.OperationName) > 0,
+		StartTimeMinimum:             EncodeTimestamp(query.StartTimeMin),
+		StartTimeMinimumEnableFilter: query.StartTimeMin.After(time.Time{}),
+		StartTimeMaximum:             EncodeTimestamp(query.StartTimeMax),
+		StartTimeMaximumEnableFilter: query.StartTimeMax.After(time.Time{}),
+		DurationMinimum:              EncodeInterval(query.DurationMin),
+		DurationMinimumEnableFilter:  query.DurationMin != time.Duration(0),
+		DurationMaximum:              EncodeInterval(query.DurationMax),
+		DurationMaximumEnableFilter:  query.DurationMax != time.Duration(0),
+		NumTraces:                    int32(query.NumTraces),
 		// Tags
 	})
 	if err != nil {
@@ -177,20 +177,20 @@ func (r *Reader) FindTraceIDs(ctx context.Context, query *spanstore.TraceQueryPa
 	}
 
 	response, err := r.q.FindTraceIDs(ctx, sql.FindTraceIDsParams{
-		ServiceName:            query.ServiceName,
-		ServiceNameEnable:      len(query.ServiceName) > 0,
-		OperationName:          query.OperationName,
-		OperationNameEnable:    len(query.OperationName) > 0,
-		StartTimeMinimum:       EncodeTimestamp(query.StartTimeMin),
-		StartTimeMinimumEnable: query.StartTimeMin.After(time.Time{}),
-		StartTimeMaximum:       EncodeTimestamp(query.StartTimeMax),
-		StartTimeMaximumEnable: query.StartTimeMax.After(time.Time{}),
-		DurationMinimum:        EncodeInterval(query.DurationMin),
-		DurationMinimumEnable:  query.DurationMin > 0*time.Second,
-		DurationMaximum:        EncodeInterval(query.DurationMax),
-		DurationMaximumEnable:  query.DurationMax > 0*time.Second,
+		ServiceName:                  query.ServiceName,
+		ServiceNameEnableFilter:      len(query.ServiceName) > 0,
+		OperationName:                query.OperationName,
+		OperationNameEnableFilter:    len(query.OperationName) > 0,
+		StartTimeMinimum:             EncodeTimestamp(query.StartTimeMin),
+		StartTimeMinimumEnableFilter: query.StartTimeMin.After(time.Time{}),
+		StartTimeMaximum:             EncodeTimestamp(query.StartTimeMax),
+		StartTimeMaximumEnableFilter: query.StartTimeMax.After(time.Time{}),
+		DurationMinimum:              EncodeInterval(query.DurationMin),
+		DurationMinimumEnableFilter:  query.DurationMin > 0*time.Second,
+		DurationMaximum:              EncodeInterval(query.DurationMax),
+		DurationMaximumEnableFilter:  query.DurationMax > 0*time.Second,
 		// TODO(johnrowl) add tags
-		NumTraces: query.NumTraces,
+		NumTraces: int32(query.NumTraces),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to query trace ids: %w", err)

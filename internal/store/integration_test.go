@@ -17,7 +17,9 @@ import (
 )
 
 func TestJaegerStorageIntegration(t *testing.T) {
-	conn, cleanup := sqltest.Harness(t)
+	conn, cleanup, closer := sqltest.Harness(t)
+	defer closer.Close()
+
 	require.Nil(t, cleanup())
 
 	q := sql.New(conn)
@@ -34,18 +36,20 @@ func TestJaegerStorageIntegration(t *testing.T) {
 		Refresh:                      func() error { return nil },
 		SkipList:                     []string{},
 	}
+
 	// Runs all storage integration tests.
 	si.IntegrationTestAll(t)
 }
 
 func TestSpans(t *testing.T) {
-	conn, cleanup := sqltest.Harness(t)
+	conn, cleanup, closer := sqltest.Harness(t)
+	defer closer.Close()
+
 	require.Nil(t, cleanup())
 
 	ctx := context.Background()
-	q := sql.New(conn)
 
-	require.Nil(t, cleanup())
+	q := sql.New(conn)
 
 	logger := slog.Default()
 	w := NewWriter(q, logger)

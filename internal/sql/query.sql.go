@@ -25,6 +25,72 @@ func (q *Queries) CleanSpans(ctx context.Context, pruneBefore pgtype.Timestamp) 
 	return result.RowsAffected(), nil
 }
 
+const findTraceIDs = `-- name: FindTraceIDs :many
+
+SELECT DISTINCT spans.trace_id as trace_id
+FROM spans
+    INNER JOIN operations ON (operations.id = spans.operation_id)
+    INNER JOIN services ON (services.id = spans.service_id)
+WHERE
+    (services.name = $1::VARCHAR OR $2::BOOLEAN = FALSE) AND
+    (operations.name = $3::VARCHAR OR $4::BOOLEAN = FALSE) AND
+    (start_time >= $5::TIMESTAMP OR $6::BOOLEAN = FALSE) AND
+    (start_time <= $7::TIMESTAMP OR $8::BOOLEAN = FALSE) AND
+    (duration >= $9::INTERVAL OR $10::BOOLEAN = FALSE) AND
+    (duration <= $11::INTERVAL OR $12::BOOLEAN = FALSE)
+LIMIT $13
+`
+
+type FindTraceIDsParams struct {
+	ServiceName                  string
+	ServiceNameEnableFilter      bool
+	OperationName                string
+	OperationNameEnableFilter    bool
+	StartTimeMinimum             pgtype.Timestamp
+	StartTimeMinimumEnableFilter bool
+	StartTimeMaximum             pgtype.Timestamp
+	StartTimeMaximumEnableFilter bool
+	DurationMinimum              pgtype.Interval
+	DurationMinimumEnableFilter  bool
+	DurationMaximum              pgtype.Interval
+	DurationMaximumEnableFilter  bool
+	NumTraces                    int32
+}
+
+func (q *Queries) FindTraceIDs(ctx context.Context, arg FindTraceIDsParams) ([][]byte, error) {
+	rows, err := q.db.Query(ctx, findTraceIDs,
+		arg.ServiceName,
+		arg.ServiceNameEnableFilter,
+		arg.OperationName,
+		arg.OperationNameEnableFilter,
+		arg.StartTimeMinimum,
+		arg.StartTimeMinimumEnableFilter,
+		arg.StartTimeMaximum,
+		arg.StartTimeMaximumEnableFilter,
+		arg.DurationMinimum,
+		arg.DurationMinimumEnableFilter,
+		arg.DurationMaximum,
+		arg.DurationMaximumEnableFilter,
+		arg.NumTraces,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items [][]byte
+	for rows.Next() {
+		var trace_id []byte
+		if err := rows.Scan(&trace_id); err != nil {
+			return nil, err
+		}
+		items = append(items, trace_id)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getOperationID = `-- name: GetOperationID :one
 SELECT id 
 FROM operations 
@@ -117,6 +183,18 @@ func (q *Queries) GetServices(ctx context.Context) ([]string, error) {
 		return nil, err
 	}
 	return items, nil
+}
+
+const getSpansCount = `-- name: GetSpansCount :one
+
+SELECT COUNT(*) FROM spans
+`
+
+func (q *Queries) GetSpansCount(ctx context.Context) (int64, error) {
+	row := q.db.QueryRow(ctx, getSpansCount)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
 }
 
 const getSpansDiskSize = `-- name: GetSpansDiskSize :one
