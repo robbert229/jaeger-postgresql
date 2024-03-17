@@ -8,11 +8,13 @@ publish:
 	helm package ./charts/jaeger-postgresql --app-version $(VERSION) --version $(VERSION) --destination=./hack/charts/
 	helm push ./hack/charts/jaeger-postgresql-$(VERSION).tgz oci://ghcr.io/robbert229/jaeger-postgresql/charts
 
-.PHONY: run-plugin
+# plugin-start starts Jaeger-PostgreSQL
+.PHONY: plugin-start
 run-plugin:
 	go run ./cmd/jaeger-postgresql -database.url=$(DBSTRING) -log-level=debug
 
-.PHONY: run-jaeger
+# jaeger-start starts the all-in-one jaeger.
+.PHONY: jaeger-start
 run-jaeger:
 	SPAN_STORAGE_TYPE='grpc-plugin' ./hack/jaeger-all-in-one --grpc-storage.server='127.0.0.1:12345' --query.enable-tracing=false
 
@@ -56,3 +58,14 @@ migrate-down: install-goose
 .PHONY: migrate-status
 migrate-status: install-goose
 	GOOSE_DBSTRING=$(DBSTRING) GOOSE_DRIVER=postgres goose -dir ./internal/sql/migrations status
+
+# tracegen-start starts a container that will produce test data spans. Useful for testing purposes.
+.PHONY: tracegen-start
+tracegen-start:
+	docker run --rm --name jaeger-postgresql-tracegen --net=host \
+		jaegertracing/jaeger-tracegen:1.55 -traces=1000000
+
+# tracegen-stop stops the jaeger-tracegen test data producer.
+.PHONY: tracegen-stop
+tracegen-stop:
+	docker rm -f jaeger-postgresql-tracegen
