@@ -50,7 +50,7 @@ configure jaeger to use Jaeger-PostgresQL for storage
 
 The official jaeger documentation is the best place to look for detailed instructions on using a external storage plugin. https://www.jaegertracing.io/docs/1.55/deployment/#storage-plugin
 
-## Contributors
+## Contributors ✨
 
 <!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
 <!-- prettier-ignore-start -->
@@ -71,29 +71,4 @@ The official jaeger documentation is the best place to look for detailed instruc
 
 ## Legacy
 
-This project started out as a [fork](jozef-slezak/jaeger-postgresql), but was eventually completely rewritten to 
-* use the remote storage plugin interface
-* have its own dedicated helm chart
-* improved functionality such as a cleaning
-
-## Contributors ✨
-
-Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/docs/en/emoji-key)):
-
-<!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
-<!-- prettier-ignore-start -->
-<!-- markdownlint-disable -->
-<table>
-  <tbody>
-    <tr>
-      <td align="center" valign="top" width="14.28%"><a href="https://github.com/jozef-slezak"><img src="https://avatars.githubusercontent.com/u/16844103?v=4?s=100" width="100px;" alt="Jozef Slezak"/><br /><sub><b>Jozef Slezak</b></sub></a><br /><a href="https://github.com/robbert229/jaeger-postgresql/commits?author=jozef-slezak" title="Code">💻</a></td>
-    </tr>
-  </tbody>
-</table>
-
-<!-- markdownlint-restore -->
-<!-- prettier-ignore-end -->
-
-<!-- ALL-CONTRIBUTORS-LIST:END -->
-
-This project follows the [all-contributors](https://github.com/all-contributors/all-contributors) specification. Contributions of any kind welcome!
+This project started out as a simple [fork](jozef-slezak/jaeger-postgresql), but was eventually completely rewritten.
