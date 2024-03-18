@@ -8,7 +8,7 @@
 ![Go](https://img.shields.io/badge/go-%2300ADD8.svg?style=flat&logo=go&logoColor=white)
 ![Kubernetes](https://img.shields.io/badge/kubernetes-%23326ce5.svg?style=flat&logo=kubernetes&logoColor=white)
 
-PostgresQL is a great general purpose. Jaeger-PostgresQL is intended to allow jaeger
+PostgresQL is a great general purpose. Jaeger-PostgreSQL is intended to allow jaeger
 to use postgresql as its backing storage solution for projects with low traffic. 
 
 ## Install
