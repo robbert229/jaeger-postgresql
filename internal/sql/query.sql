@@ -127,3 +127,22 @@ WHERE spans.start_time < sqlc.arg(prune_before)::TIMESTAMP;
 -- name: GetSpansDiskSize :one
 
 SELECT pg_total_relation_size('spans');
+
+-- name: GetSpansCount :one
+
+SELECT COUNT(*) FROM spans;
+
+-- name: FindTraceIDs :many
+
+SELECT DISTINCT spans.trace_id as trace_id
+FROM spans
+    INNER JOIN operations ON (operations.id = spans.operation_id)
+    INNER JOIN services ON (services.id = spans.service_id)
+WHERE
+    (services.name = sqlc.arg(service_name)::VARCHAR OR sqlc.arg(service_name_enable_filter)::BOOLEAN = FALSE) AND
+    (operations.name = sqlc.arg(operation_name)::VARCHAR OR sqlc.arg(operation_name_enable_filter)::BOOLEAN = FALSE) AND
+    (start_time >= sqlc.arg(start_time_minimum)::TIMESTAMP OR sqlc.arg(start_time_minimum_enable_filter)::BOOLEAN = FALSE) AND
+    (start_time <= sqlc.arg(start_time_maximum)::TIMESTAMP OR sqlc.arg(start_time_maximum_enable_filter)::BOOLEAN = FALSE) AND
+    (duration >= sqlc.arg(duration_minimum)::INTERVAL OR sqlc.arg(duration_minimum_enable_filter)::BOOLEAN = FALSE) AND
+    (duration <= sqlc.arg(duration_maximum)::INTERVAL OR sqlc.arg(duration_maximum_enable_filter)::BOOLEAN = FALSE)
+LIMIT sqlc.arg(num_traces);
