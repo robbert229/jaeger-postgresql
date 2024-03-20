@@ -8,6 +8,8 @@ require (
 	github.com/pressly/goose/v3 v3.19.2
 	github.com/prometheus/client_golang v1.19.0
 	github.com/stretchr/testify v1.9.0
+	github.com/testcontainers/testcontainers-go v0.29.1
+	github.com/testcontainers/testcontainers-go/modules/postgres v0.29.1
 	go.opentelemetry.io/otel/trace v1.24.0
 	go.uber.org/fx v1.21.0
 	google.golang.org/grpc v1.62.1
@@ -26,7 +28,7 @@ require (
 	github.com/cpuguy83/dockercfg v0.3.1 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/distribution/reference v0.5.0 // indirect
-	github.com/docker/docker v25.0.3+incompatible // indirect
+	github.com/docker/docker v25.0.5+incompatible // indirect
 	github.com/docker/go-connections v0.5.0 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/fatih/color v1.14.1 // indirect
@@ -71,8 +73,6 @@ require (
 	github.com/shirou/gopsutil/v3 v3.24.1 // indirect
 	github.com/shoenig/go-m1cpu v0.1.6 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
-	github.com/testcontainers/testcontainers-go v0.29.1 // indirect
-	github.com/testcontainers/testcontainers-go/modules/postgres v0.29.1 // indirect
 	github.com/tklauser/go-sysconf v0.3.12 // indirect
 	github.com/tklauser/numcpus v0.6.1 // indirect
 	github.com/yusufpapurcu/wmi v1.2.3 // indirect
