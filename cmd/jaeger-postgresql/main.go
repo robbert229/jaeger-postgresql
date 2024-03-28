@@ -219,6 +219,12 @@ var (
 		Name:      "spans_table_bytes",
 		Help:      "The size of the spans table in bytes",
 	})
+
+	spansGuage = promauto.NewGauge(prometheus.GaugeOpts{
+		Namespace: "jaeger_postgresql",
+		Name:      "spans_count",
+		Help:      "The number of spans",
+	})
 )
 
 func main() {
@@ -259,9 +265,17 @@ func main() {
 						if err != nil {
 							logger.Error("failed to query for disk size", "err", err)
 							continue
+						} else {
+							spansTableDiskSizeGuage.Set(float64(byteCount))
 						}
 
-						spansTableDiskSizeGuage.Set(float64(byteCount))
+						count, err := q.GetSpansCount(ctx)
+						if err != nil {
+							logger.Error("failed to query for span count", "err", err)
+							continue
+						} else {
+							spansGuage.Set(float64(count))
+						}
 
 					}
 				}
