@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.0](https://github.com/robbert229/jaeger-postgresql/compare/v1.5.1...v1.6.0) (2024-03-28)
+
+
+### Features
+
+* added span gauge to prometheus ([#36](https://github.com/robbert229/jaeger-postgresql/issues/36)) ([f891462](https://github.com/robbert229/jaeger-postgresql/commit/f891462b44ca2b9f284c1149c14cecda7a9c2fc9))
+
 ## [1.5.1](https://github.com/robbert229/jaeger-postgresql/compare/v1.5.0...v1.5.1) (2024-03-18)
 
 
