@@ -18,7 +18,7 @@ Installation is done through the use of a helm chart.
 <!-- x-release-please-start-version -->
 ```
 helm install myrelease oci://ghcr.io/robbert229/jaeger-postgresql/charts/jaeger-postgresql \
-    --version v1.5.0 \
+    --version v1.6.0 \
     --set database.url='postgresql://postgres:password@database:5432/jaeger'
 ```
 <!-- x-release-please-end -->
