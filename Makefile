@@ -10,12 +10,12 @@ publish:
 
 # plugin-start starts Jaeger-PostgreSQL
 .PHONY: plugin-start
-run-plugin:
+plugin-start:
 	go run ./cmd/jaeger-postgresql -database.url=$(DBSTRING) -log-level=debug
 
 # jaeger-start starts the all-in-one jaeger.
 .PHONY: jaeger-start
-run-jaeger:
+jaeger-start:
 	SPAN_STORAGE_TYPE='grpc-plugin' ./hack/jaeger-all-in-one --grpc-storage.server='127.0.0.1:12345' --query.enable-tracing=false
 
 .PHONY: install-all-in-one
@@ -63,7 +63,7 @@ migrate-status: install-goose
 .PHONY: tracegen-start
 tracegen-start:
 	docker run --rm --name jaeger-postgresql-tracegen --net=host \
-		jaegertracing/jaeger-tracegen:1.55 -traces=1000000
+		jaegertracing/jaeger-tracegen:1.55 -traces=1000
 
 # tracegen-stop stops the jaeger-tracegen test data producer.
 .PHONY: tracegen-stop
