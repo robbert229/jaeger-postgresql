@@ -32,17 +32,28 @@ spec:
         {{- toYaml .Values.service.podSecurityContext | nindent 8 }}
       containers:
         - name: jaeger-postgresql
-          args:
-            - "--log-level"
-            - "{{ .Values.service.logLevel}}"
-            - "--database.url"
-            - "{{ .Values.database.url }}"
-            - "--database.max-conns"
-            - "{{ .Values.database.maxConns}}"
-            - "--grpc-server.host-port"
-            - "0.0.0.0:12345"
-            - "--admin.http.host-port"
-            - "0.0.0.0:12346"
+          env:
+{{- range $key, $value := .Values.extraEnvs }}
+            - name: {{ $key }}
+              value: {{ $value | quote }}
+{{- end }}
+            - name: JAEGER_POSTGRESQL_LOG_LEVEL
+              value: {{ .Values.service.logLevel | quote }}
+            - name: JAEGER_POSTGRESQL_DATABASE_MAX_CONNS
+              value: {{ .Values.database.maxConns | quote }}
+            - name: JAEGER_POSTGRESQL_DATABASE_URL
+            {{ with .Values.database.urlFromSecret }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .name }}
+                  key: {{ .key }}
+            {{ else }}
+              value: {{ .Values.database.url | quote }}
+            {{ end }}
+            - name: JAEGER_POSTGRESQL_GRPC_SERVER_HOST_PORT
+              value: "0.0.0.0:12345"
+            - name: JAEGER_POSTGRESQL_ADMIN_HTTP_HOST_PORT
+              value: "0.0.0.0:12346"
           securityContext:
             {{- toYaml .Values.service.securityContext | nindent 12 }}
           image: "{{ .Values.service.image }}"
