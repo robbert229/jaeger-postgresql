@@ -2,11 +2,12 @@ package main
 
 import (
 	"context"
-	"flag"
 	"fmt"
+	"io/fs"
 	"log/slog"
 	"net"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -19,6 +20,8 @@ import (
 	"github.com/robbert229/jaeger-postgresql/internal/logger"
 	"github.com/robbert229/jaeger-postgresql/internal/sql"
 	"github.com/robbert229/jaeger-postgresql/internal/store"
+	"github.com/spf13/pflag"
+	"github.com/spf13/viper"
 	"go.uber.org/fx"
 	"go.uber.org/fx/fxevent"
 	"google.golang.org/grpc"
@@ -26,19 +29,15 @@ import (
 
 // ProvideLogger returns a function that provides a logger
 func ProvideLogger() any {
-	return func() (*slog.Logger, error) {
-		return logger.New(loglevelFlag)
+	return func(cfg Config) (*slog.Logger, error) {
+		return logger.New(&cfg.LogLevel)
 	}
 }
 
 // ProvidePgxPool returns a function that provides a pgx pool
 func ProvidePgxPool() any {
-	return func(logger *slog.Logger, lc fx.Lifecycle) (*pgxpool.Pool, error) {
-		if databaseURLFlag == nil {
-			return nil, fmt.Errorf("invalid database url")
-		}
-
-		databaseURL := *databaseURLFlag
+	return func(cfg Config, logger *slog.Logger, lc fx.Lifecycle) (*pgxpool.Pool, error) {
+		databaseURL := cfg.Database.URL
 		if databaseURL == "" {
 			return nil, fmt.Errorf("invalid database url")
 		}
@@ -56,10 +55,10 @@ func ProvidePgxPool() any {
 		// handle max conns
 		{
 			var maxConns int32
-			if databaseMaxConnsFlag == nil {
+			if cfg.Database.MaxConns == 0 {
 				maxConns = 20
 			} else {
-				maxConns = int32(*databaseMaxConnsFlag)
+				maxConns = int32(cfg.Database.MaxConns)
 			}
 
 			pgxconfig.MaxConns = maxConns
@@ -132,23 +131,19 @@ func ProvideHandler() any {
 
 // ProvideGRPCServer provides a grpc server.
 func ProvideGRPCServer() any {
-	return func(lc fx.Lifecycle, logger *slog.Logger) (*grpc.Server, error) {
+	return func(lc fx.Lifecycle, cfg Config, logger *slog.Logger) (*grpc.Server, error) {
 		srv := grpc.NewServer()
 
-		if grpcHostPortFlag == nil {
-			return nil, fmt.Errorf("invalid grpc-server.host-port")
+		if cfg.GRPCServer.HostPort == "" {
+			return nil, fmt.Errorf("invalid grpc-server.host-port given: %s", cfg.GRPCServer.HostPort)
 		}
 
-		if *grpcHostPortFlag == "" {
-			return nil, fmt.Errorf("invalid grpc-server.host-port given: %s", *grpcHostPortFlag)
-		}
-
-		lis, err := net.Listen("tcp", *grpcHostPortFlag)
+		lis, err := net.Listen("tcp", cfg.GRPCServer.HostPort)
 		if err != nil {
 			return nil, fmt.Errorf("failed to listen: %w", err)
 		}
 
-		logger.Info("grpc server started", "addr", *grpcHostPortFlag)
+		logger.Info("grpc server started", "addr", cfg.GRPCServer.HostPort)
 
 		lc.Append(fx.StartStopHook(
 			func(ctx context.Context) error {
@@ -168,22 +163,18 @@ func ProvideGRPCServer() any {
 
 // ProvideAdminServer provides the admin http server.
 func ProvideAdminServer() any {
-	return func(lc fx.Lifecycle, logger *slog.Logger) (*http.ServeMux, error) {
+	return func(lc fx.Lifecycle, cfg Config, logger *slog.Logger) (*http.ServeMux, error) {
 		mux := http.NewServeMux()
 
 		srv := http.Server{
 			Handler: mux,
 		}
 
-		if adminHttpHostPortFlag == nil {
-			return nil, fmt.Errorf("no admin.http.host-port given")
+		if cfg.Admin.HTTP.HostPort == "" {
+			return nil, fmt.Errorf("invalid admin.http.host-port given: %s", cfg.Admin.HTTP.HostPort)
 		}
 
-		if *adminHttpHostPortFlag == "" {
-			return nil, fmt.Errorf("invalid admin.http.host-port given: %s", *adminHttpHostPortFlag)
-		}
-
-		lis, err := net.Listen("tcp", *adminHttpHostPortFlag)
+		lis, err := net.Listen("tcp", cfg.Admin.HTTP.HostPort)
 		if err != nil {
 			return nil, fmt.Errorf("failed to listen: %w", err)
 		}
@@ -206,14 +197,6 @@ func ProvideAdminServer() any {
 }
 
 var (
-	databaseURLFlag       = flag.String("database.url", "", "the postgres connection url to use to connect to the database")
-	databaseMaxConnsFlag  = flag.Int("database.max-conns", 20, "Max number of database connections of which the plugin will try to maintain at any given time")
-	loglevelFlag          = flag.String("log-level", "warn", "Minimal allowed log level")
-	grpcHostPortFlag      = flag.String("grpc-server.host-port", ":12345", "the host:port (eg 127.0.0.1:12345 or :12345) of the storage provider's gRPC server")
-	adminHttpHostPortFlag = flag.String("admin.http.host-port", ":12346", "The host:port (e.g. 127.0.0.1:12346 or :12346) for the admin server, including health check, /metrics, etc.")
-)
-
-var (
 	spansTableDiskSizeGuage = promauto.NewGauge(prometheus.GaugeOpts{
 		Namespace: "jaeger_postgresql",
 		Name:      "spans_table_bytes",
@@ -227,14 +210,70 @@ var (
 	})
 )
 
-func main() {
-	flag.Parse()
+// Config is the configuration struct for the jaeger-postgresql service.
+type Config struct {
+	Database struct {
+		URL      string `mapstructure:"url"`
+		MaxConns int    `mapstructure:"max-conns"`
+	} `mapstructure:"database"`
 
+	LogLevel string `mapstructure:"log-level"`
+
+	GRPCServer struct {
+		HostPort string `mapstructure:"host-port"`
+	} `mapstructure:"grpc-server"`
+
+	Admin struct {
+		HTTP struct {
+			HostPort string `mapstructure:"host-port"`
+		}
+	}
+}
+
+func ProvideConfig() func() (Config, error) {
+	return func() (Config, error) {
+		pflag.String("database.url", "", "the postgres connection url to use to connect to the database")
+		pflag.Int("database.max-conns", 20, "Max number of database connections of which the plugin will try to maintain at any given time")
+		pflag.String("log-level", "warn", "Minimal allowed log level")
+		pflag.String("grpc-server.host-port", ":12345", "the host:port (eg 127.0.0.1:12345 or :12345) of the storage provider's gRPC server")
+		pflag.String("admin.http.host-port", ":12346", "The host:port (e.g. 127.0.0.1:12346 or :12346) for the admin server, including health check, /metrics, etc.")
+
+		v := viper.New()
+		v.SetEnvPrefix("JAEGER_POSTGRESQL")
+		v.AutomaticEnv()
+		v.SetConfigFile("jaeger-postgresql")
+		v.SetConfigType("yaml")
+		v.AddConfigPath(".")
+		v.SetEnvKeyReplacer(strings.NewReplacer(".", "_", "-", "_"))
+		pflag.Parse()
+		v.BindPFlags(pflag.CommandLine)
+
+		var cfg Config
+		if err := v.ReadInConfig(); err != nil {
+			_, ok := err.(*fs.PathError)
+			_, ok2 := err.(viper.ConfigFileNotFoundError)
+
+			if !ok && !ok2 {
+				return cfg, fmt.Errorf("failed to read in config: %w", err)
+			}
+		}
+
+		err := v.Unmarshal(&cfg)
+		if err != nil {
+			return cfg, fmt.Errorf("failed to decode configuration: %w", err)
+		}
+
+		return cfg, nil
+	}
+}
+
+func main() {
 	fx.New(
 		fx.WithLogger(func(logger *slog.Logger) fxevent.Logger {
 			return &fxevent.SlogLogger{Logger: logger.With("component", "uber/fx")}
 		}),
 		fx.Provide(
+			ProvideConfig(),
 			ProvideLogger(),
 			ProvidePgxPool(),
 			ProvideSpanStoreReader(),

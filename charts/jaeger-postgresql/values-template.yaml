@@ -2,6 +2,13 @@ database:
   url: "postgresql://postgres:password@localhost:5432/jaeger"
   maxConns: 10
 
+  # -- (object) Source database url from a secret
+  urlFromSecret:
+    # name of secret
+    # name: ""
+    # key within secret containing url
+    # key: ""
+
 service:
   logLevel: "info"
 
@@ -108,3 +115,5 @@ cleaner:
   tolerations: []
 
   affinity: {}
+
+extraEnvs: []
