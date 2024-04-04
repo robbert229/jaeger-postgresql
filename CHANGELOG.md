@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.7.0](https://github.com/robbert229/jaeger-postgresql/compare/v1.6.0...v1.7.0) (2024-04-04)
+
+
+### Features
+
+* added extra configuration methods ([#40](https://github.com/robbert229/jaeger-postgresql/issues/40)) ([947140b](https://github.com/robbert229/jaeger-postgresql/commit/947140b5888e8719dfd3d3e4c3af7833b15435ad))
+
 ## [1.6.0](https://github.com/robbert229/jaeger-postgresql/compare/v1.5.1...v1.6.0) (2024-03-28)
 
 
