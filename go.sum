@@ -323,8 +323,8 @@ github.com/subosito/gotenv v1.6.0 h1:9NlTDc1FTs4qu0DDq7AEtTPNw6SVm7uBMsUCUjABIf8
 github.com/subosito/gotenv v1.6.0/go.mod h1:Dk4QP5c2W3ibzajGcXpNraDfq2IrhjMIvMSWPKKo0FU=
 github.com/testcontainers/testcontainers-go v0.30.0 h1:jmn/XS22q4YRrcMwWg0pAwlClzs/abopbsBzrepyc4E=
 github.com/testcontainers/testcontainers-go v0.30.0/go.mod h1:K+kHNGiM5zjklKjgTtcrEetF3uhWbMUyqAQoyoh8Pf0=
-github.com/testcontainers/testcontainers-go/modules/postgres v0.29.1 h1:hTn3MzhR9w4btwfzr/NborGCaeNZG0MPBpufeDj10KA=
-github.com/testcontainers/testcontainers-go/modules/postgres v0.29.1/go.mod h1:YsWyy+pHDgvGdi0axGOx6CGXWsE6eqSaApyd1FYYSSc=
+github.com/testcontainers/testcontainers-go/modules/postgres v0.30.0 h1:D3HFqpZS90iRGAN7M85DFiuhPfvYvFNnx8urQ6mPAvo=
+github.com/testcontainers/testcontainers-go/modules/postgres v0.30.0/go.mod h1:e1sKxwUOkqzvaqdHl/oV9mUtFmkDPTfBGp0po2tnWQU=
 github.com/tklauser/go-sysconf v0.3.12/go.mod h1:Ho14jnntGE1fpdOqQEEaiKRpvIavV0hSfmBq8nJbHYI=
 github.com/tklauser/go-sysconf v0.3.13 h1:GBUpcahXSpR2xN01jhkNAbTLRk2Yzgggk8IM08lq3r4=
 github.com/tklauser/go-sysconf v0.3.13/go.mod h1:zwleP4Q4OehZHGn4CYZDipCgg9usW5IJePewFCGVEa0=

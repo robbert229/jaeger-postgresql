@@ -11,7 +11,7 @@ require (
 	github.com/spf13/viper v1.18.2
 	github.com/stretchr/testify v1.9.0
 	github.com/testcontainers/testcontainers-go v0.30.0
-	github.com/testcontainers/testcontainers-go/modules/postgres v0.29.1
+	github.com/testcontainers/testcontainers-go/modules/postgres v0.30.0
 	go.opentelemetry.io/otel/trace v1.25.0
 	go.uber.org/fx v1.21.0
 	google.golang.org/grpc v1.62.1
