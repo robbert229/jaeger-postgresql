@@ -14,7 +14,7 @@ require (
 	github.com/testcontainers/testcontainers-go/modules/postgres v0.29.1
 	go.opentelemetry.io/otel/trace v1.25.0
 	go.uber.org/fx v1.21.0
-	google.golang.org/grpc v1.62.1
+	google.golang.org/grpc v1.64.0
 )
 
 require (
