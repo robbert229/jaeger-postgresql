@@ -187,7 +187,7 @@ func (q *Queries) GetServices(ctx context.Context) ([]string, error) {
 
 const getSpansCount = `-- name: GetSpansCount :one
 
-SELECT COUNT(*) FROM spans
+SELECT n_live_tup FROM pg_stat_user_tables WHERE relname = 'spans'
 `
 
 func (q *Queries) GetSpansCount(ctx context.Context) (int64, error) {
