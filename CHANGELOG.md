@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.8.0](https://github.com/robbert229/jaeger-postgresql/compare/v1.7.0...v1.8.0) (2025-01-29)
+
+
+### Features
+
+* add arm64 support ([#75](https://github.com/robbert229/jaeger-postgresql/issues/75)) ([e45676e](https://github.com/robbert229/jaeger-postgresql/commit/e45676e3a2d2d61161f312427ababf562b9d96e6))
+
+
+### Performance Improvements
+
+* optimize span count metric gathering ([#65](https://github.com/robbert229/jaeger-postgresql/issues/65)) ([56f381c](https://github.com/robbert229/jaeger-postgresql/commit/56f381c53c047fc954293929c63eba7d9e379283))
+
 ## [1.7.0](https://github.com/robbert229/jaeger-postgresql/compare/v1.6.0...v1.7.0) (2024-04-04)
 
 
