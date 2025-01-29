@@ -187,7 +187,17 @@ func (q *Queries) GetServices(ctx context.Context) ([]string, error) {
 
 const getSpansCount = `-- name: GetSpansCount :one
 
-SELECT COUNT(*) FROM spans
+WITH span_tables AS (
+    SELECT inhrelid::regclass::text AS relname
+    FROM pg_catalog.pg_class
+        JOIN pg_catalog.pg_inherits ON inhparent = oid
+    WHERE relname = 'spans'
+    UNION
+    SELECT 'spans'
+)
+SELECT sum(n_live_tup)
+FROM pg_stat_user_tables
+    JOIN span_tables USING (relname) 
 `
 
 func (q *Queries) GetSpansCount(ctx context.Context) (int64, error) {
@@ -199,7 +209,16 @@ func (q *Queries) GetSpansCount(ctx context.Context) (int64, error) {
 
 const getSpansDiskSize = `-- name: GetSpansDiskSize :one
 
-SELECT pg_total_relation_size('spans')
+WITH span_tables AS (
+    SELECT inhrelid::regclass::text AS relname
+    FROM pg_catalog.pg_class
+        JOIN pg_catalog.pg_inherits ON inhparent = oid
+    WHERE relname = 'spans'
+    UNION
+    SELECT 'spans'
+)
+SELECT sum(pg_total_relation_size(relname))
+FROM span_tables
 `
 
 func (q *Queries) GetSpansDiskSize(ctx context.Context) (int64, error) {
