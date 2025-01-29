@@ -65,8 +65,9 @@ The official jaeger documentation is the best place to look for detailed instruc
 <table>
   <tbody>
     <tr>
-      <td align="center" valign="top" width="14.28%"><a href="http://blog.johnrowley.co"><img src="https://avatars.githubusercontent.com/u/3454480?v=4?s=100" width="100px;" alt="John Rowley"/><br /><sub><b>John Rowley</b></sub></a><br /><a href="https://github.com/robbert229/jaeger-postgresql/commits?author=robbert229" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/jozef-slezak"><img src="https://avatars.githubusercontent.com/u/16844103?v=4?s=100" width="100px;" alt="Jozef Slezak"/><br /><sub><b>Jozef Slezak</b></sub></a><br /><a href="https://github.com/robbert229/jaeger-postgresql/commits?author=jozef-slezak" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="http://blog.johnrowley.co"><img src="https://avatars.githubusercontent.com/u/3454480?v=4?s=100" width="100px;" alt="John Rowley"/><br /><sub><b>John Rowley</b></sub></a><br /><a href="https://github.com/robbert229/jaeger-postgresql/commits?author=robbert229" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/aokiji"><img src="https://avatars.githubusercontent.com/u/164521?v=4?s=100" width="100px;" alt="Nicolas De los Santos"/><br /><sub><b>Nicolas De los Santos</b></sub></a><br /><a href="https://github.com/robbert229/jaeger-postgresql/commits?author=aokiji" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
