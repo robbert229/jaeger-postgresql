@@ -4,9 +4,9 @@ go 1.21
 toolchain go1.22.5
 
 require (
-	github.com/jackc/pgx/v5 v5.5.5
+	github.com/jackc/pgx/v5 v5.7.1
 	github.com/jaegertracing/jaeger v1.55.0
-	github.com/pressly/goose/v3 v3.19.2
+	github.com/pressly/goose/v3 v3.24.1
 	github.com/prometheus/client_golang v1.19.0
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.18.2
@@ -49,8 +49,8 @@ require (
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/hashicorp/yamux v0.1.1 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
-	github.com/jackc/pgservicefile v0.0.0-20231201235250-de7065d80cb9 // indirect
-	github.com/jackc/puddle/v2 v2.2.1 // indirect
+	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
+	github.com/jackc/puddle/v2 v2.2.2 // indirect
 	github.com/klauspost/compress v1.17.7 // indirect
 	github.com/kr/pretty v0.3.1 // indirect
 	github.com/kr/text v0.2.0 // indirect
@@ -80,7 +80,7 @@ require (
 	github.com/rogpeppe/go-internal v1.13.1 // indirect
 	github.com/sagikazarmark/locafero v0.4.0 // indirect
 	github.com/sagikazarmark/slog-shim v0.1.0 // indirect
-	github.com/sethvargo/go-retry v0.2.4 // indirect
+	github.com/sethvargo/go-retry v0.3.0 // indirect
 	github.com/shirou/gopsutil/v3 v3.24.2 // indirect
 	github.com/shoenig/go-m1cpu v0.1.6 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
