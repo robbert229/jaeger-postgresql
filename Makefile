@@ -11,7 +11,7 @@ publish:
 # plugin-start starts Jaeger-PostgreSQL
 .PHONY: plugin-start
 plugin-start:
-	go run ./cmd/jaeger-postgresql -database.url=$(DBSTRING) -log-level=debug
+	go run ./cmd/jaeger-postgresql --database.url=$(DBSTRING) --log-level=debug
 
 # jaeger-start starts the all-in-one jaeger.
 .PHONY: jaeger-start
