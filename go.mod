@@ -2,10 +2,10 @@ module github.com/robbert229/jaeger-postgresql
 
 go 1.22.0
 
-toolchain go1.22.5
+toolchain go1.24.1
 
 require (
-	github.com/jackc/pgx/v5 v5.7.1
+	github.com/jackc/pgx/v5 v5.7.4
 	github.com/jaegertracing/jaeger v1.55.0
 	github.com/pressly/goose/v3 v3.24.1
 	github.com/prometheus/client_golang v1.19.0
